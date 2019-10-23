@@ -99,15 +99,15 @@ $(LIB_ASM_OBJ): $(OBJ_PATH)/%.o: $(LIB_SRC_PATH)/%.s
 	$(CC) $(C_FLAGS) -c $^ -o $@
 
 ########################## make clean ##############################
-.PHONY: clean
-clean:
-	-rm $(C_OBJ)
-	-rm $(ASM_OBJ)
-	-rm $(CORE_C_OBJ)
-	-rm $(CORE_ASM_OBJ)
-	-rm $(LIB_C_OBJ)
-	-rm $(LIB_ASM_OBJ)
-	-rm $(BIN_PATH)/$(TARGET).elf
-	-rm $(BIN_PATH)/$(TARGET).bin
-	-rm $(BIN_PATH)/$(TARGET).hex
+# .PHONY: clean
+# clean:
+# 	-rm $(C_OBJ)
+# 	-rm $(ASM_OBJ)
+# 	-rm $(CORE_C_OBJ)
+# 	-rm $(CORE_ASM_OBJ)
+# 	-rm $(LIB_C_OBJ)
+# 	-rm $(LIB_ASM_OBJ)
+# 	-rm $(BIN_PATH)/$(TARGET).elf
+# 	-rm $(BIN_PATH)/$(TARGET).bin
+# 	-rm $(BIN_PATH)/$(TARGET).hex
 
