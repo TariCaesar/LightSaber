@@ -7,7 +7,7 @@
             "label": "build",
             "type": "shell",
             "command": "make",
-            "args": ["TARGET=LightSaber"],
+            "args": [],
             "group": {
                 "kind": "build",
                 "isDefault": true

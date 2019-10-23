@@ -8,6 +8,31 @@ ifndef TARGET
 TARGET := out
 endif
 
+
+# specify debug or release mode
+ifndef mode
+mode := debug
+endif
+
+C_DEBUG_FLAGS := -g
+
+#BIN_PATH is used to save binary/hex file generated finally
+ifeq ($(mode), debug)
+ifdef C_FLAGS
+C_FLAGS := $(C_FLAGS) $(C_DEBUG_FLAGS)
+else
+C_FLAGS := $(C_DEBUG_FLAGS)
+endif
+BIN_PATH := ./Debug
+else ifeq ($(mode), release)
+BIN_PATH := ./Release
+else
+$(error "'mode' should be 'debug' or 'release')
+endif
+
+#OBJ_PATH is used to save object file temporarily
+OBJ_PATH := $(BIN_PATH)/Obj
+
 # Define source file path
 C_SRC_PATH := ./Src
 CORE_SRC_PATH := ./Lib/Core/Src
@@ -17,12 +42,6 @@ LIB_SRC_PATH := ./Lib/StdPeriph/Src
 C_INC_PATH := ./Inc
 CORE_INC_PATH := ./Lib/Core/Inc
 LIB_INC_PATH := ./Lib/StdPeriph/Inc
-
-#OBJ_PATH is used to save object file temporarily
-OBJ_PATH := ./Obj
-
-#BIN_PATH is used to save binary/hex file generated finally
-BIN_PATH := ./Bin
 
 #LINK_FILE specify the linker file used in ld
 LINK_FILE := ./Lib/Core/STM32F103XB_FLASH.ld
@@ -47,21 +66,12 @@ $(addprefix $(OBJ_PATH)/, $(patsubst %.c, %.o, $(notdir $(C_SRC))))
 ASM_OBJ = \
 $(addprefix $(OBJ_PATH)/, $(patsubst %.s, %.o, $(notdir $(ASM_SRC))))
 
-###################### Compile Option ###########################
 INC_FLAGS := -I $(C_INC_PATH) -I $(LIB_INC_PATH) -I $(CORE_INC_PATH)
 
-C_FLAGS := -W -Wall -mcpu=cortex-m3 -mthumb --specs=nosys.specs \
+C_FLAGS := $(C_FLAGS) -W -Wall -mcpu=cortex-m3 -mthumb --specs=nosys.specs \
 -D $(DEVICE) -D USE_FULL_LL_DRIVER $(INC_FLAGS) 
-C_DEBUG_FLAGS := -g 
 
-ifndef mode
-mode=debug
-endif
-
-ifeq ($(mode), debug)
-C_FLAGS := $(C_FLAGS) $(C_DEBUG_FLAGS)
-endif
-#################################################################
+########################### make #################################
 .PHONY: all
 all: $(C_OBJ) $(ASM_OBJ) $(CORE_C_OBJ) $(CORE_ASM_OBJ) $(LIB_C_OBJ) $(LIB_ASM_OBJ)
 	$(CC) $(C_FLAGS) $(C_OBJ) $(ASM_OBJ) $(CORE_C_OBJ) $(CORE_ASM_OBJ) $(LIB_C_OBJ) $(LIB_ASM_OBJ) \
@@ -88,6 +98,7 @@ $(LIB_C_OBJ): $(OBJ_PATH)/%.o: $(LIB_SRC_PATH)/%.c
 $(LIB_ASM_OBJ): $(OBJ_PATH)/%.o: $(LIB_SRC_PATH)/%.s
 	$(CC) $(C_FLAGS) -c $^ -o $@
 
+########################## make clean ##############################
 .PHONY: clean
 clean:
 	-rm $(C_OBJ)
