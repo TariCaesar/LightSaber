@@ -8,6 +8,7 @@
             "name": "(arm-gdb) Launch",
             "type": "cppdbg",
             "request": "launch",
+            "targetArchitecture": "arm",
             "program": "${workspaceRoot}/Debug/out.elf",
             "args": [],
             "stopAtEntry": true,
@@ -16,7 +17,7 @@
             "externalConsole": true,
             "MIMode": "gdb",
             "miDebuggerPath": "C:/Dev/Gcc-arm/bin/arm-none-eabi-gdb.exe",
-            "miDebuggerArgs": "",
+            "miDebuggerArgs": "--eval-command \"target remote :4242\"",
             "setupCommands": [
                 {
                     "description": "Enable pretty-printing for gdb",
