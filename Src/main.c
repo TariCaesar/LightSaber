@@ -16,6 +16,9 @@ int main(){
 
     //Set priorityGroup to 2 for all the system
     NVIC_SetPriorityGrouping(2);
+    //Enable dma clock
+    LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA1);
+
     //wait until usartinit complete
     while(UsartInit());
     char usartInitCompleteString[] = "Usart init complete!\n";
@@ -24,8 +27,6 @@ int main(){
     while(SpiInit());
     char spiInitCompleteString[] = "Spi init complete!\n";
     UsartSendData((uint8_t*)spiInitCompleteString, sizeof(spiInitCompleteString));
-
-    
 
     while(1){
     }

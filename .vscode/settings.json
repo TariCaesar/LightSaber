@@ -1,5 +1,7 @@
 {
     "files.associations": {
-        "stm32f1xx_ll_gpio.h": "c"
+        "stm32f1xx_ll_gpio.h": "c",
+        "stdarg.h": "c",
+        "cstdarg": "c"
     }
 }
