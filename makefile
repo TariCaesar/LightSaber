@@ -14,7 +14,7 @@ ifndef mode
 mode := debug
 endif
 
-C_DEBUG_FLAGS := -g
+C_DEBUG_FLAGS := -ggdb3 -gdwarf-4
 
 #BIN_PATH is used to save binary/hex file generated finally
 ifeq ($(mode), debug)

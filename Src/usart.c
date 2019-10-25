@@ -6,19 +6,25 @@ static RxBuffer rxBuffer;
 int UsartInit(){
     //check the GPIOA clock status
     //if not open, open it
-    if(LL_APB2_GRP1_IsEnabledClock(LL_APB2_GRP1_PERIPH_GPIOA)){
+    if(!LL_APB2_GRP1_IsEnabledClock(LL_APB2_GRP1_PERIPH_GPIOA)){
         LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOA);
     }
     //GPIO AF configuration
-    //USART1 Tx is PA9, Rx is PA10
+    //USART1 Tx is PA9, configure into af output
     LL_GPIO_InitTypeDef usart1GpioInit;
-    usart1GpioInit.Pin = LL_GPIO_PIN_9 | LL_GPIO_PIN_10;
+    usart1GpioInit.Pin = LL_GPIO_PIN_9;
     usart1GpioInit.Mode = LL_GPIO_MODE_ALTERNATE;
     usart1GpioInit.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-    //Cause we only use 8MHz clok, set gpio to low speed
     usart1GpioInit.Speed = LL_GPIO_SPEED_FREQ_LOW;
     usart1GpioInit.Pull = LL_GPIO_PULL_UP;
-    LL_GPIO_Init(GPIOA, &usart1GpioInit);
+    LL_GPIO_Init(GPIOA, &usart1GpioInit); 
+
+    //USART1 Rx is PA10, configure into float input
+    usart1GpioInit.Pin = LL_GPIO_PIN_10;
+    usart1GpioInit.Mode = LL_GPIO_MODE_FLOATING;
+    usart1GpioInit.Speed = LL_GPIO_SPEED_FREQ_LOW;
+    LL_GPIO_Init(GPIOA, &usart1GpioInit); 
+
     //Enable usart1 clock
     LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_USART1);
 
@@ -30,7 +36,7 @@ int UsartInit(){
     usartInit.DataWidth = LL_USART_DATAWIDTH_8B;
     usartInit.StopBits = LL_USART_STOPBITS_1;
     usartInit.Parity = LL_USART_PARITY_NONE;
-    //Set usart into full-duplex
+    //Enable Tx and Rx
     usartInit.TransferDirection = LL_USART_DIRECTION_TX_RX;
     //Disable hardware flow control
     usartInit.HardwareFlowControl = LL_USART_HWCONTROL_NONE;
@@ -38,13 +44,8 @@ int UsartInit(){
     usartInit.OverSampling = LL_USART_OVERSAMPLING_16;
     LL_USART_Init(USART1, &usartInit);
 
-    //init usart clock
-    LL_USART_ClockInitTypeDef usartClockInit;
-    usartClockInit.ClockOutput = LL_USART_CLOCK_ENABLE;
-    usartClockInit.ClockPhase = LL_USART_PHASE_1EDGE;
-    usartClockInit.ClockPolarity = LL_USART_POLARITY_HIGH;
-    usartClockInit.LastBitClockPulse = LL_USART_LASTCLKPULSE_NO_OUTPUT;
-    LL_USART_ClockInit(USART1, &usartClockInit);
+    //Set usart into asysn mode
+    LL_USART_ConfigAsyncMode(USART1);
 
     //Init usart send data struct
     usart1SendRequest.addr = 0;
@@ -64,10 +65,6 @@ int UsartInit(){
     NVIC_SetPriority(USART1_IRQn, NVIC_EncodePriority(2, 2, 0));
     NVIC_EnableIRQ(USART1_IRQn);
 
-    //Enable rx but disable tx
-    LL_USART_EnableDirectionRx(USART1);
-    LL_USART_DisableDirectionTx(USART1);
-
     //Enable Usart1 
     LL_USART_Enable(USART1);
     return 0;
@@ -82,8 +79,6 @@ int UsartSendData(uint8_t *addr_src, uint32_t cnt){
     //Put data in TX Reg
     LL_USART_TransmitData8(USART1, *(usart1SendRequest.addr++));
 
-    //Enable USART1 TX
-    LL_USART_EnableDirectionTx(USART1);
     return 0;
 }
 
@@ -105,7 +100,6 @@ void USART1_IRQHandler(){
         }
         else{
             //Send Complete, Disable Tx and free the bus
-            LL_USART_DisableDirectionTx(USART1);
             usart1SendRequest.busy = 0;
         }
     }
