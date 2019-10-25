@@ -17,7 +17,7 @@
             "externalConsole": true,
             "MIMode": "gdb",
             "miDebuggerPath": "C:/Dev/Gcc-arm/bin/arm-none-eabi-gdb.exe",
-            "miDebuggerArgs": "--eval-command \"target remote :4242\"",
+            "miDebuggerArgs": "--eval-command \"target remote :5200\"",
             "setupCommands": [
                 {
                     "description": "Enable pretty-printing for gdb",
@@ -25,7 +25,7 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "build"
+            "preLaunchTask": "util"
         }
     ]
 }
