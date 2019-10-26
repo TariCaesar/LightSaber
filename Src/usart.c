@@ -21,27 +21,27 @@ int UsartInit(){
 
     //USART1 Rx is PA10, configure into float input
     usart1GpioInit.Pin = LL_GPIO_PIN_10;
-    usart1GpioInit.Mode = LL_GPIO_MODE_FLOATING;
+    usart1GpioInit.Mode = LL_GPIO_MODE_INPUT;
     LL_GPIO_Init(GPIOA, &usart1GpioInit); 
 
     //Enable usart1 clock
     LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_USART1);
 
     //init usart
-    LL_USART_InitTypeDef usartInit;
+    LL_USART_InitTypeDef usart1Init;
     //Set usart1 baudrate to 115200
-    usartInit.BaudRate = 115200u;
+    usart1Init.BaudRate = 115200u;
     //Set usart1 frame format 8b data, 1b stop, no parity
-    usartInit.DataWidth = LL_USART_DATAWIDTH_8B;
-    usartInit.StopBits = LL_USART_STOPBITS_1;
-    usartInit.Parity = LL_USART_PARITY_NONE;
+    usart1Init.DataWidth = LL_USART_DATAWIDTH_8B;
+    usart1Init.StopBits = LL_USART_STOPBITS_1;
+    usart1Init.Parity = LL_USART_PARITY_NONE;
     //only enable RX as we'll enable TX later
-    usartInit.TransferDirection = LL_USART_DIRECTION_RX;
+    usart1Init.TransferDirection = LL_USART_DIRECTION_RX;
     //Disable hardware flow control
-    usartInit.HardwareFlowControl = LL_USART_HWCONTROL_NONE;
+    usart1Init.HardwareFlowControl = LL_USART_HWCONTROL_NONE;
     //Set oversampling to 16
-    usartInit.OverSampling = LL_USART_OVERSAMPLING_16;
-    LL_USART_Init(USART1, &usartInit);
+    usart1Init.OverSampling = LL_USART_OVERSAMPLING_16;
+    LL_USART_Init(USART1, &usart1Init);
     //Enable Usart1 TxDMA
     LL_USART_EnableDMAReq_TX(USART1);
 
@@ -126,34 +126,35 @@ static int UsartTransmit(){
     return 0;
 }
 
-int UsartSendChar(char ch){
+int fputc(int ch, FILE *f){
+    f=f;    //just for eliminate warning
     uint32_t head_next = (txBuffer.head + 1) % USART_TX_BUFFER_SIZE;
     //if txBuffer is full, return error
-    if(head_next == txBuffer.tail)return 1;
+    if(head_next == txBuffer.tail)return -1;
     txBuffer.data[txBuffer.head] = ch;
     txBuffer.head = head_next;
     //check if Usart Tx is enable
     //if so, it means dma is running
     if(LL_USART_GetTransferDirection(USART1) != LL_USART_DIRECTION_TX_RX)UsartTransmit();
-    return 0;
+    return ch;
 }
 
-int UsartSendData(uint8_t* addr, uint32_t size){
-    uint32_t i;
+int _write (int fd, char *pBuffer, int size){
+    fd = fd;    //just for eliminate warning
+    int32_t i;
     //check if buffer is large enough
-    uint32_t txBufferRemain = 
+    int32_t txBufferRemain = 
     (txBuffer.head < txBuffer.tail)? 
     (txBuffer.tail - txBuffer.head - 1):
     (USART_TX_BUFFER_SIZE - txBuffer.head + txBuffer.tail - 1);
-    if(txBufferRemain < size)return 1;
+    if(txBufferRemain < size)return -1;
     for(i = 0; i < size; ++i){
-        txBuffer.data[txBuffer.head] = addr[i];
+        txBuffer.data[txBuffer.head] = (uint8_t)(pBuffer[i]);
         txBuffer.head = (txBuffer.head + 1) % USART_TX_BUFFER_SIZE;
     }
     if(LL_USART_GetTransferDirection(USART1) != LL_USART_DIRECTION_TX_RX)UsartTransmit();
-    return 0;
+    return size;
 }
-
 
 void USART1_IRQHandler(){
     if(LL_USART_IsActiveFlag_TC(USART1)){

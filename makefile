@@ -15,6 +15,7 @@ mode := debug
 endif
 
 C_DEBUG_FLAGS := -ggdb3 -gdwarf-4
+C_RELEASE_FLAGS := -Os
 
 #BIN_PATH is used to save binary/hex file generated finally
 ifeq ($(mode), debug)
@@ -25,6 +26,11 @@ C_FLAGS := $(C_DEBUG_FLAGS)
 endif
 BIN_PATH := ./Debug
 else ifeq ($(mode), release)
+ifdef C_FLAGS
+C_FLAGS := $(C_FLAGS) $(C_RELEASE_FLAGS)
+else
+C_FLAGS := $(C_RELEASE_FLAGS)
+endif
 BIN_PATH := ./Release
 else
 $(error "'mode' should be 'debug' or 'release')

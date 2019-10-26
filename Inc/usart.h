@@ -1,13 +1,27 @@
 #ifndef USART_H
 #define USART_H
 
-#include <stdarg.h>
+#include <stdio.h>
 
 #include "stm32f103xb.h"
 #include "stm32f1xx_ll_bus.h"
+#include "stm32f1xx_ll_gpio.h"
 #include "stm32f1xx_ll_usart.h"
 #include "stm32f1xx_ll_dma.h"
-#include "stm32f1xx_ll_gpio.h"
+
+//add support for printf
+#ifdef __GNUC__
+int _write (int fd, char *pBuffer, int size);
+#else
+//############## forbid semihost for printf ###################
+#pragma import(__use_no_semihosting)             
+struct __FILE{int handle;};
+FILE __stdout;
+void _sys_exit(int x){x = x;}
+//#############################################################
+int fputc(int ch, FILE *f);
+#endif
+
 
 //due to our full judgement alogrithm, buffer size is 1 less than them
 #define USART_RX_BUFFER_SIZE 256
@@ -29,9 +43,6 @@ typedef struct{
 
 int UsartInit();
 int UsartReadBuffer(uint8_t *addr_dst);
-
-int UsartSendChar(char ch);
-int UsartSendData(uint8_t* addr, uint32_t size);
 
 void USART1_IRQHandler();
 #endif

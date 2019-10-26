@@ -20,13 +20,18 @@ int main(){
     LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA1);
 
     //wait until usartinit complete
+    //after init, print clk information and usart init complete
     while(UsartInit());
-    char usartInitCompleteString[] = "Usart init complete!\n";
-    UsartSendData((uint8_t*)usartInitCompleteString, sizeof(usartInitCompleteString));
-    
+    LL_RCC_ClocksTypeDef sysClk;
+    LL_RCC_GetSystemClocksFreq(&sysClk);
+    printf("System Clock frequency: %d\n", (int)sysClk.SYSCLK_Frequency);
+    printf("AHB Clock frequency: %d\n", (int)sysClk.HCLK_Frequency);
+    printf("APB1 Clock frequency: %d\n", (int)sysClk.PCLK1_Frequency);
+    printf("APB2 Clock frequency: %d\n", (int)sysClk.PCLK2_Frequency);
+    printf("Usart init Complete!\n");
+
     while(SpiInit());
-    char spiInitCompleteString[] = "Spi init complete!\n";
-    UsartSendData((uint8_t*)spiInitCompleteString, sizeof(spiInitCompleteString));
+    printf("Spi init complete!\n");
 
     while(1){
     }
