@@ -1,5 +1,4 @@
 #include "i2c.h"
 
-int I2cInit(){
-
+int32_t I2cInit(){
 }

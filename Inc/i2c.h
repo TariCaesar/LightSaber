@@ -6,5 +6,5 @@
 #include "stm32f1xx_ll_i2c.h"
 #include "stm32f1xx_ll_gpio.h"
 
-int I2cInit();
+int32_t I2cInit();
 #endif

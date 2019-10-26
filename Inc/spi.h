@@ -6,5 +6,5 @@
 #include "stm32f1xx_ll_gpio.h"
 #include "stm32f1xx_ll_spi.h"
 
-int SpiInit();
+int32_t SpiInit();
 #endif

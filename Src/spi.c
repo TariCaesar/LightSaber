@@ -1,6 +1,6 @@
 #include "spi.h"
 
-int SpiInit(){
+int32_t SpiInit(){
     //check the GPIOB clock status
     //if not open, open it
     if(!LL_APB2_GRP1_IsEnabledClock(LL_APB2_GRP1_PERIPH_GPIOB)){

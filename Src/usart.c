@@ -3,7 +3,7 @@
 static UsartRxBuffer rxBuffer;
 static UsartTxBuffer txBuffer;
 
-int UsartInit(){
+int32_t UsartInit(){
     //check the GPIOA clock status
     //if not open, open it
     if(!LL_APB2_GRP1_IsEnabledClock(LL_APB2_GRP1_PERIPH_GPIOA)){
@@ -73,7 +73,7 @@ int UsartInit(){
     return 0;
 }
 
-int UsartReadBuffer(uint8_t *addr_dst){
+int32_t UsartReadBuffer(uint8_t *addr_dst){
     //judge if the cycle buffer is empty
     if(rxBuffer.head == rxBuffer.tail)return 1;
     *addr_dst = rxBuffer.data[rxBuffer.tail];
@@ -81,7 +81,7 @@ int UsartReadBuffer(uint8_t *addr_dst){
     return 0;
 }
 
-static int UsartTransmit(){
+static int32_t UsartTransmit(){
     //if buffer remain less than USART_TX_DMA_THRESHOLD, use single transimit
     //otherwise, use dma
     uint32_t txTransmitRemain =
@@ -130,7 +130,7 @@ int fputc(int ch, FILE *f){
     f=f;    //just for eliminate warning
     uint32_t head_next = (txBuffer.head + 1) % USART_TX_BUFFER_SIZE;
     //if txBuffer is full, return error
-    if(head_next == txBuffer.tail)return -1;
+    if(head_next == txBuffer.tail)return 0;
     txBuffer.data[txBuffer.head] = ch;
     txBuffer.head = head_next;
     //check if Usart Tx is enable
@@ -147,7 +147,7 @@ int _write (int fd, char *pBuffer, int size){
     (txBuffer.head < txBuffer.tail)? 
     (txBuffer.tail - txBuffer.head - 1):
     (USART_TX_BUFFER_SIZE - txBuffer.head + txBuffer.tail - 1);
-    if(txBufferRemain < size)return -1;
+    if(txBufferRemain < size)return 0;
     for(i = 0; i < size; ++i){
         txBuffer.data[txBuffer.head] = (uint8_t)(pBuffer[i]);
         txBuffer.head = (txBuffer.head + 1) % USART_TX_BUFFER_SIZE;

@@ -1,5 +1,5 @@
 #include "gpio.h"
 
-int GpioInit(){
+int32_t GpioInit(){
     return 0;
 }

@@ -3,4 +3,5 @@
 
 #include "spi.h"
 
+int32_t ExternFlashInit();
 #endif

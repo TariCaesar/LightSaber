@@ -41,8 +41,8 @@ typedef struct{
     uint32_t tailNext;
 }UsartTxBuffer;
 
-int UsartInit();
-int UsartReadBuffer(uint8_t *addr_dst);
+int32_t UsartInit();
+int32_t UsartReadBuffer(uint8_t *addr_dst);
 
 void USART1_IRQHandler();
 #endif
