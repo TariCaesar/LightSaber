@@ -1,13 +1,13 @@
 CC := arm-none-eabi-gcc
 OBJCOPY := arm-none-eabi-objcopy
 
+
 # specify the device 
 DEVICE := STM32F103xB
 
 ifndef TARGET
 TARGET := out
 endif
-
 
 # specify debug or release mode
 ifndef mode
@@ -38,6 +38,15 @@ endif
 
 #OBJ_PATH is used to save object file temporarily
 OBJ_PATH := $(BIN_PATH)/Obj
+
+#Check if the path exist 
+#If not, create it
+ifeq (, $(wildcard $(BIN_PATH)/.*))
+$(shell	mkdir "$(BIN_PATH)")
+endif
+ifeq (, $(wildcard $(OBJ_PATH)/.*))
+$(shell	mkdir "$(OBJ_PATH)")
+endif
 
 # Define source file path
 C_SRC_PATH := ./Src
@@ -76,6 +85,7 @@ INC_FLAGS := -I $(C_INC_PATH) -I $(LIB_INC_PATH) -I $(CORE_INC_PATH)
 
 C_FLAGS := $(C_FLAGS) -W -Wall -mcpu=cortex-m3 -mthumb --specs=nosys.specs \
 -D $(DEVICE) -D USE_FULL_LL_DRIVER $(INC_FLAGS) 
+
 
 ########################### make #################################
 .PHONY: all

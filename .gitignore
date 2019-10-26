@@ -1,5 +1,3 @@
-*.o
-*.bin
-*.elf
-*.hex
+/Debug
+/Release
 /.vscode
