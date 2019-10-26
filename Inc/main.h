@@ -11,5 +11,6 @@
 #include "i2c.h"
 #include "spi.h"
 #include "usart.h"
+#include "extern_flash.h"
 
 #endif

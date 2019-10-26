@@ -8,15 +8,20 @@ int32_t SpiInit(){
     }
 
     LL_GPIO_InitTypeDef spi2GpioInit;
-    spi2GpioInit.Pin = LL_GPIO_PIN_12 | LL_GPIO_PIN_13 | LL_GPIO_PIN_15;
+    spi2GpioInit.Pin = LL_GPIO_PIN_13 | LL_GPIO_PIN_15;
     spi2GpioInit.Mode = LL_GPIO_MODE_ALTERNATE;
     spi2GpioInit.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-    spi2GpioInit.Speed = LL_GPIO_SPEED_FREQ_MEDIUM;
+    spi2GpioInit.Speed = LL_GPIO_SPEED_FREQ_HIGH;
     spi2GpioInit.Pull = LL_GPIO_PULL_UP;
     LL_GPIO_Init(GPIOB, &spi2GpioInit);
     spi2GpioInit.Pin = LL_GPIO_PIN_14;
     spi2GpioInit.Mode = LL_GPIO_MODE_INPUT;
     LL_GPIO_Init(GPIOB, &spi2GpioInit);
+    spi2GpioInit.Pin = LL_GPIO_PIN_12;
+    spi2GpioInit.Mode = LL_GPIO_MODE_OUTPUT;
+    LL_GPIO_Init(GPIOB, &spi2GpioInit);
+    LL_GPIO_WriteOutputPort(GPIOB, LL_GPIO_ReadOutputPort(GPIOB) | 0x1000);
+
 
     LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_SPI2);
 
@@ -30,11 +35,25 @@ int32_t SpiInit(){
     spi2Init.ClockPhase = LL_SPI_PHASE_2EDGE;
     spi2Init.ClockPolarity = LL_SPI_POLARITY_HIGH;
     spi2Init.TransferDirection = LL_SPI_FULL_DUPLEX;
-    spi2Init.NSS = LL_SPI_NSS_HARD_OUTPUT;
+    spi2Init.NSS = LL_SPI_NSS_SOFT;
     LL_SPI_Init(SPI2, &spi2Init);
+
+    LL_SPI_EnableIT_TXE(SPI2);
+    LL_SPI_EnableIT_RXNE(SPI2);
 
     //Enable SPI2
     LL_SPI_Enable(SPI2);
+
+    //Active SPI
+    SpiWriteReadByte(0xff);
     
     return 0;
+}
+
+//Must enable CS signal before use this function
+uint8_t SpiWriteReadByte(uint8_t dataWrite){
+    while(!LL_SPI_IsActiveFlag_TXE(SPI2));
+    LL_SPI_TransmitData8(SPI2, dataWrite);
+    while(!LL_SPI_IsActiveFlag_RXNE(SPI2));
+    return LL_SPI_ReceiveData8(SPI2);
 }

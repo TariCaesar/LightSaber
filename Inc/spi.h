@@ -7,4 +7,5 @@
 #include "stm32f1xx_ll_spi.h"
 
 int32_t SpiInit();
+uint8_t SpiWriteReadByte(uint8_t dataWrite);
 #endif

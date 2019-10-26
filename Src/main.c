@@ -19,7 +19,6 @@ int main(){
     //Enable dma clock
     LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA1);
 
-    //wait until usartinit complete
     //after init, print clk information and usart init complete
     while(UsartInit());
     LL_RCC_ClocksTypeDef sysClk;
@@ -30,8 +29,11 @@ int main(){
     printf("APB2 Clock frequency: %d\n", (int)sysClk.PCLK2_Frequency);
     printf("Usart init Complete!\n");
 
-    while(SpiInit());
-    printf("Spi init complete!\n");
+    if(!SpiInit())printf("Spi init complete!\n");
+    else printf("Spi Init Fail");
+
+    if(!ExternFlashInit())printf("Extern flash self-check pass!\n");
+    else printf("Extern flash self-check fail!");
 
     while(1){
     }
