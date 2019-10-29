@@ -22,22 +22,22 @@ int main(){
     //after init, print clk information and usart init complete
     char UsartInitSuccessString[] = "Usart init Success!\n";
     while(UsartInit())continue;
-    UsartSendData((uint8_t*)UsartInitSuccessString, sizeof(UsartInitSuccessString));
+    UsartSendData((uint8_t*)UsartInitSuccessString, sizeof(UsartInitSuccessString), USART1);
 
-    char SpiInitSuccessString[] = "Usart init Success!\n";
-    char SpiInitFailString[] = "Usart init Fail!\n";
-    if(!SpiInit())UsartSendData((uint8_t*)SpiInitSuccessString, sizeof(SpiInitSuccessString));
-    else UsartSendData((uint8_t*)SpiInitFailString, sizeof(SpiInitFailString));
+    char SpiInitSuccessString[] = "Spi init Success!\n";
+    char SpiInitFailString[] = "Spi init Fail!\n";
+    if(!SpiInit())UsartSendData((uint8_t*)SpiInitSuccessString, sizeof(SpiInitSuccessString), USART1);
+    else UsartSendData((uint8_t*)SpiInitFailString, sizeof(SpiInitFailString), USART1);
 
     char ExtFlashCheckPassString[] = "External Flash self check pass!\n";
     char ExtFlashCheckFailString[] = "External Flash self check fail!\n";
-    if(!ExternFlashInit())UsartSendData((uint8_t*)ExtFlashCheckPassString, sizeof(ExtFlashCheckPassString));
-    else UsartSendData((uint8_t*)ExtFlashCheckFailString, sizeof(ExtFlashCheckFailString));
+    if(!ExternFlashInit())UsartSendData((uint8_t*)ExtFlashCheckPassString, sizeof(ExtFlashCheckPassString), USART1);
+    else UsartSendData((uint8_t*)ExtFlashCheckFailString, sizeof(ExtFlashCheckFailString), USART1);
 
     uint8_t data;
     while(1){
-        while(!UsartReceiveData(&data, 1))continue;
-        UsartSendData(&data, 1);
+        if(UsartReceiveData(&data, 1, USART1))UsartSendData(&data, 1, USART2);
+        if(UsartReceiveData(&data, 1, USART2))UsartSendData(&data, 1, USART1);
     }
     return 0;
 }

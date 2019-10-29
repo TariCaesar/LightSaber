@@ -7,16 +7,20 @@ int32_t SpiInit(){
         LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOB);
     }
 
+
     LL_GPIO_InitTypeDef spi2GpioInit;
+    //PB13 is CLK for spi, PB15 is MOSI, configure into af output
     spi2GpioInit.Pin = LL_GPIO_PIN_13 | LL_GPIO_PIN_15;
     spi2GpioInit.Mode = LL_GPIO_MODE_ALTERNATE;
     spi2GpioInit.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
     spi2GpioInit.Speed = LL_GPIO_SPEED_FREQ_HIGH;
     spi2GpioInit.Pull = LL_GPIO_PULL_UP;
     LL_GPIO_Init(GPIOB, &spi2GpioInit);
+    //PB14 is MISO for spi, configure into input
     spi2GpioInit.Pin = LL_GPIO_PIN_14;
     spi2GpioInit.Mode = LL_GPIO_MODE_INPUT;
     LL_GPIO_Init(GPIOB, &spi2GpioInit);
+    //PB12 is SS for spi, configure into normal output
     spi2GpioInit.Pin = LL_GPIO_PIN_12;
     spi2GpioInit.Mode = LL_GPIO_MODE_OUTPUT;
     LL_GPIO_Init(GPIOB, &spi2GpioInit);

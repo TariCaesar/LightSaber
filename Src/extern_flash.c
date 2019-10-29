@@ -1,6 +1,6 @@
 #include "extern_flash.h" 
 
-#define EXTERN_FLASH_PAGE_SIZE 256
+#define EXTERN_FLASH_PAGE_SIZE 128 
 
 static uint8_t externFlashBufferPing[EXTERN_FLASH_PAGE_SIZE];
 static uint8_t externFlashBufferPong[EXTERN_FLASH_PAGE_SIZE];
@@ -131,7 +131,6 @@ static int32_t FlashConfig(){
 
     return 0;
 }
-
 
 int32_t ExternFlashInit(){
     //check if SPI2 is enable
