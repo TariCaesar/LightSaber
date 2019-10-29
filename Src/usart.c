@@ -73,14 +73,6 @@ int32_t UsartInit(){
     return 0;
 }
 
-int32_t UsartReadBuffer(uint8_t *addr_dst){
-    //judge if the cycle buffer is empty
-    if(rxBuffer.head == rxBuffer.tail)return 1;
-    *addr_dst = rxBuffer.data[rxBuffer.tail];
-    rxBuffer.tail = (rxBuffer.tail + 1) % USART_RX_BUFFER_SIZE;
-    return 0;
-}
-
 static int32_t UsartTransmit(){
     //if buffer remain less than USART_TX_DMA_THRESHOLD, use single transimit
     //otherwise, use dma
@@ -91,7 +83,7 @@ static int32_t UsartTransmit(){
 
     if(txTransmitRemain == 0)return 1;
     if(txTransmitRemain < USART_TX_DMA_THRESHOLD){
-        txBuffer.tailNext = (txBuffer.head + 1) % USART_TX_BUFFER_SIZE;
+        txBuffer.tailNext = (txBuffer.tail+ 1) % USART_TX_BUFFER_SIZE;
         LL_USART_TransmitData8(USART1, txBuffer.data[txBuffer.tail]);
     }
     else{
@@ -111,7 +103,7 @@ static int32_t UsartTransmit(){
             txBuffer.tailNext = 0;
         }
         else{
-            usart1TxDmaInit.NbData = txBuffer.head -txBuffer.tail;
+            usart1TxDmaInit.NbData = txBuffer.head - txBuffer.tail;
             txBuffer.tailNext = txBuffer.head;
         }
         LL_DMA_Init(DMA1, LL_DMA_CHANNEL_4, &usart1TxDmaInit);
@@ -126,21 +118,21 @@ static int32_t UsartTransmit(){
     return 0;
 }
 
-int fputc(int ch, FILE *f){
-    f=f;    //just for eliminate warning
-    uint32_t head_next = (txBuffer.head + 1) % USART_TX_BUFFER_SIZE;
-    //if txBuffer is full, return error
-    if(head_next == txBuffer.tail)return 0;
-    txBuffer.data[txBuffer.head] = ch;
-    txBuffer.head = head_next;
-    //check if Usart Tx is enable
-    //if so, it means dma is running
-    if(LL_USART_GetTransferDirection(USART1) != LL_USART_DIRECTION_TX_RX)UsartTransmit();
-    return ch;
+int32_t UsartReceiveData(uint8_t* addr_dst, int32_t size){
+    int32_t i;
+    int32_t rxReceiveRemain =
+    (rxBuffer.head < rxBuffer.tail)? 
+    (rxBuffer.head + USART_RX_BUFFER_SIZE - rxBuffer.tail):
+    (rxBuffer.head - rxBuffer.tail);
+    if(rxReceiveRemain < size)return 0;
+    for(i = 0; i < size; ++i){
+        addr_dst[i] = rxBuffer.data[rxBuffer.tail];
+        rxBuffer.tail = (rxBuffer.tail + 1) % USART_RX_BUFFER_SIZE;
+    }
+    return size;
 }
 
-int _write (int fd, char *pBuffer, int size){
-    fd = fd;    //just for eliminate warning
+int32_t UsartSendData(uint8_t* addr_src, int32_t size){
     int32_t i;
     //check if buffer is large enough
     int32_t txBufferRemain = 
@@ -149,10 +141,12 @@ int _write (int fd, char *pBuffer, int size){
     (USART_TX_BUFFER_SIZE - txBuffer.head + txBuffer.tail - 1);
     if(txBufferRemain < size)return 0;
     for(i = 0; i < size; ++i){
-        txBuffer.data[txBuffer.head] = (uint8_t)(pBuffer[i]);
+        txBuffer.data[txBuffer.head] = addr_src[i];
         txBuffer.head = (txBuffer.head + 1) % USART_TX_BUFFER_SIZE;
     }
-    if(LL_USART_GetTransferDirection(USART1) != LL_USART_DIRECTION_TX_RX)UsartTransmit();
+    //check if Usart Tx is enable
+    //if so, it means dma is running
+    if(!(LL_USART_GetTransferDirection(USART1) & LL_USART_DIRECTION_TX))UsartTransmit();
     return size;
 }
 

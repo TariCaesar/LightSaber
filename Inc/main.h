@@ -1,8 +1,6 @@
 #ifndef MAIN_H
 #define MAIN_H
 
-#include <stdio.h>
-
 #include "stm32f103xb.h"
 #include "stm32f1xx_ll_utils.h"
 #include "stm32f1xx_ll_bus.h"

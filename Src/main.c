@@ -3,7 +3,7 @@
 int main(){
     //Clock init
     LL_UTILS_PLLInitTypeDef pllInit;
-    pllInit.PLLMul = LL_RCC_PLL_MUL_9;
+    pllInit.PLLMul = LL_RCC_PLL_MUL_8;
     pllInit.Prediv = LL_RCC_PREDIV_DIV_1;
     LL_UTILS_ClkInitTypeDef clkInit;
     //Set AHB the same as pll clk, 72MHz
@@ -20,22 +20,24 @@ int main(){
     LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA1);
 
     //after init, print clk information and usart init complete
-    while(UsartInit());
-    LL_RCC_ClocksTypeDef sysClk;
-    LL_RCC_GetSystemClocksFreq(&sysClk);
-    printf("System Clock frequency: %d\n", (int)sysClk.SYSCLK_Frequency);
-    printf("AHB Clock frequency: %d\n", (int)sysClk.HCLK_Frequency);
-    printf("APB1 Clock frequency: %d\n", (int)sysClk.PCLK1_Frequency);
-    printf("APB2 Clock frequency: %d\n", (int)sysClk.PCLK2_Frequency);
-    printf("Usart init Complete!\n");
+    char UsartInitSuccessString[] = "Usart init Success!\n";
+    while(UsartInit())continue;
+    UsartSendData((uint8_t*)UsartInitSuccessString, sizeof(UsartInitSuccessString));
 
-    if(!SpiInit())printf("Spi init complete!\n");
-    else printf("Spi Init Fail");
+    char SpiInitSuccessString[] = "Usart init Success!\n";
+    char SpiInitFailString[] = "Usart init Fail!\n";
+    if(!SpiInit())UsartSendData((uint8_t*)SpiInitSuccessString, sizeof(SpiInitSuccessString));
+    else UsartSendData((uint8_t*)SpiInitFailString, sizeof(SpiInitFailString));
 
-    if(!ExternFlashInit())printf("Extern flash self-check pass!\n");
-    else printf("Extern flash self-check fail!");
+    char ExtFlashCheckPassString[] = "External Flash self check pass!\n";
+    char ExtFlashCheckFailString[] = "External Flash self check fail!\n";
+    if(!ExternFlashInit())UsartSendData((uint8_t*)ExtFlashCheckPassString, sizeof(ExtFlashCheckPassString));
+    else UsartSendData((uint8_t*)ExtFlashCheckFailString, sizeof(ExtFlashCheckFailString));
 
+    uint8_t data;
     while(1){
+        while(!UsartReceiveData(&data, 1))continue;
+        UsartSendData(&data, 1);
     }
     return 0;
 }
