@@ -21,6 +21,12 @@ int32_t I2cInit(){
     LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_I2C1);
 
     LL_I2C_InitTypeDef i2c1Init;
+    LL_I2C_StructInit(&i2c1Init);
     i2c1Init.ClockSpeed = LL_I2C_CLOCK_SPEED_STANDARD_MODE;
+    i2c1Init.PeripheralMode = LL_I2C_MODE_I2C;
+    i2c1Init.OwnAddress1 = 0x52;
+    i2c1Init.OwnAddrSize = LL_I2C_OWNADDRESS1_7BIT;
+    i2c1Init.TypeAcknowledge = LL_I2C_ACK;
+    LL_I2C_Init(I2C1, &i2c1Init);
     return 0;
 }

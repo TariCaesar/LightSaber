@@ -7,43 +7,43 @@ static uint8_t externFlashBufferPong[EXTERN_FLASH_PAGE_SIZE];
 
 static int32_t FlashUnlock(){
     //Write Enable
-    LL_GPIO_WriteOutputPort(GPIOB, LL_GPIO_ReadOutputPort(GPIOB) & (~0x1000));
-    SpiWriteReadByte(0x06);
-    LL_GPIO_WriteOutputPort(GPIOB, LL_GPIO_ReadOutputPort(GPIOB) | 0x1000);
+    SpiSSEnable();
+    SpiWriteReadByte(FLASH_CMD_WRITEENABLE);
+    SpiSSDisable();
 
     //Write 0x00 to Status Reg 1 and Status Reg 2
     //Thus all page all writable
-    LL_GPIO_WriteOutputPort(GPIOB, LL_GPIO_ReadOutputPort(GPIOB) & (~0x1000));
-    SpiWriteReadByte(0x01);
+    SpiSSEnable();
+    SpiWriteReadByte(FLASH_CMD_WRITEREG);
     SpiWriteReadByte(0x00);
     SpiWriteReadByte(0x00);
-    LL_GPIO_WriteOutputPort(GPIOB, LL_GPIO_ReadOutputPort(GPIOB) | 0x1000);
+    SpiSSDisable();
 
     return 0;
 }
 
 static int32_t FlashLock(){
     //Write Enable
-    LL_GPIO_WriteOutputPort(GPIOB, LL_GPIO_ReadOutputPort(GPIOB) & (~0x1000));
-    SpiWriteReadByte(0x06);
-    LL_GPIO_WriteOutputPort(GPIOB, LL_GPIO_ReadOutputPort(GPIOB) | 0x1000);
+    SpiSSEnable();
+    SpiWriteReadByte(FLASH_CMD_WRITEENABLE);
+    SpiSSDisable();
 
     //protect all pages
-    LL_GPIO_WriteOutputPort(GPIOB, LL_GPIO_ReadOutputPort(GPIOB) & (~0x1000));
-    SpiWriteReadByte(0x01);
+    SpiSSEnable();
+    SpiWriteReadByte(FLASH_CMD_WRITEREG);
     SpiWriteReadByte(0x00);
     SpiWriteReadByte(0x40);
-    LL_GPIO_WriteOutputPort(GPIOB, LL_GPIO_ReadOutputPort(GPIOB) | 0x1000);
+    SpiSSDisable();
 
     return 0;
 }
 
 static int32_t FlashIsBusy(){
     uint8_t flashStatus;
-    LL_GPIO_WriteOutputPort(GPIOB, LL_GPIO_ReadOutputPort(GPIOB) & (~0x1000));
-    SpiWriteReadByte(0x05);
+    SpiSSEnable();
+    SpiWriteReadByte(FLASH_CMD_READREG1);
     flashStatus = SpiWriteReadByte(0xff);
-    LL_GPIO_WriteOutputPort(GPIOB, LL_GPIO_ReadOutputPort(GPIOB) | 0x1000);
+    SpiSSDisable();
 
     return (flashStatus & 0x1);
 }
@@ -53,17 +53,17 @@ static int32_t FlashSectorErase(uint32_t addr){
     if(addr & 0xfff)return 1;
 
     //Write Enable
-    LL_GPIO_WriteOutputPort(GPIOB, LL_GPIO_ReadOutputPort(GPIOB) & (~0x1000));
-    SpiWriteReadByte(0x06);
-    LL_GPIO_WriteOutputPort(GPIOB, LL_GPIO_ReadOutputPort(GPIOB) | 0x1000);
+    SpiSSEnable();
+    SpiWriteReadByte(FLASH_CMD_WRITEENABLE);
+    SpiSSDisable();
     
     //erase
-    LL_GPIO_WriteOutputPort(GPIOB, LL_GPIO_ReadOutputPort(GPIOB) & (~0x1000));
-    SpiWriteReadByte(0x20);
+    SpiSSEnable();
+    SpiWriteReadByte(FLASH_CMD_SECTORERASE);
     SpiWriteReadByte((uint8_t)(addr >> 16));
     SpiWriteReadByte((uint8_t)(addr >> 8));
     SpiWriteReadByte((uint8_t)addr);
-    LL_GPIO_WriteOutputPort(GPIOB, LL_GPIO_ReadOutputPort(GPIOB) | 0x1000);
+    SpiSSDisable();
 
     //wait util erase complete
     while(FlashIsBusy());
@@ -71,14 +71,13 @@ static int32_t FlashSectorErase(uint32_t addr){
 }
 
 static int32_t FlashReadByte(uint32_t addr, uint8_t* addr_dst){
-
-    LL_GPIO_WriteOutputPort(GPIOB, LL_GPIO_ReadOutputPort(GPIOB) & (~0x1000));
-    SpiWriteReadByte(0x03);
+    SpiSSEnable();
+    SpiWriteReadByte(FLASH_CMD_READBYTE);
     SpiWriteReadByte((uint8_t)(addr >> 16));
     SpiWriteReadByte((uint8_t)(addr >> 8));
     SpiWriteReadByte((uint8_t)addr);
     *addr_dst = SpiWriteReadByte(0xff);
-    LL_GPIO_WriteOutputPort(GPIOB, LL_GPIO_ReadOutputPort(GPIOB) | 0x1000);
+    SpiSSDisable();
 
     return 0;
 }
@@ -88,12 +87,12 @@ static int32_t FlashWrite(uint32_t addr, uint8_t* addr_src, uint32_t size){
     if(size > 256)return 1;
 
     //Write Enable
-    LL_GPIO_WriteOutputPort(GPIOB, LL_GPIO_ReadOutputPort(GPIOB) & (~0x1000));
-    SpiWriteReadByte(0x06);
-    LL_GPIO_WriteOutputPort(GPIOB, LL_GPIO_ReadOutputPort(GPIOB) | 0x1000);
+    SpiSSEnable();
+    SpiWriteReadByte(FLASH_CMD_WRITEENABLE);
+    SpiSSDisable();
 
-    LL_GPIO_WriteOutputPort(GPIOB, LL_GPIO_ReadOutputPort(GPIOB) & (~0x1000));
-    SpiWriteReadByte(0x02);
+    SpiSSEnable();
+    SpiWriteReadByte(FLASH_CMD_WRITEENABLE);
     SpiWriteReadByte((uint8_t)(addr >> 16));
     SpiWriteReadByte((uint8_t)(addr >> 8));
     SpiWriteReadByte((uint8_t)addr);
@@ -101,7 +100,7 @@ static int32_t FlashWrite(uint32_t addr, uint8_t* addr_src, uint32_t size){
     for(i = 0; i < size; i++){
         SpiWriteReadByte(addr_src[i]);
     }
-    LL_GPIO_WriteOutputPort(GPIOB, LL_GPIO_ReadOutputPort(GPIOB) | 0x1000);
+    SpiSSDisable();
 
     return 0;
 }
