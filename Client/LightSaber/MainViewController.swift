@@ -86,7 +86,7 @@ class MainViewController: CustomColorPickerViewController, ColorPickerDelegate, 
 
     // Connect
     func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData _: [String: Any], rssi _: NSNumber) {
-        if peripheral.name == "LightSaber0" {
+        if peripheral.name?.contains("LightSaber") ?? false {
             label.text = "Connecting"
             print("Connecting")
             self.peripheral = peripheral
@@ -97,7 +97,7 @@ class MainViewController: CustomColorPickerViewController, ColorPickerDelegate, 
     // Discover services
     func centralManager(_: CBCentralManager, didConnect peripheral: CBPeripheral) {
         centralManager?.stopScan()
-        label.text = "LightSaber0"
+        label.text = peripheral.name
         print("Connected")
         activityIndicator.stopAnimating()
 
