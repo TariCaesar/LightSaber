@@ -1,3 +1,4 @@
-/Debug
-/Release
-/.vscode
+Debug/
+Release/
+.vscode/
+.DS_Store
