@@ -1,3 +1,3 @@
-Light Saber
-================================================================
-This is a electronic system design project.
+# LightSaber
+
+This is an electronic system design project.
