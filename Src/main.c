@@ -1,6 +1,10 @@
 #include "main.h"
+#include "helper.h"
 
-int main(){
+void ProcessBluetoothData(uint8_t *data);
+
+int main()
+{
     //Clock init
     LL_UTILS_PLLInitTypeDef pllInit;
     pllInit.PLLMul = LL_RCC_PLL_MUL_8;
@@ -21,23 +25,61 @@ int main(){
 
     //after init, print clk information and usart init complete
     char UsartInitSuccessString[] = "Usart init Success!\n";
-    while(UsartInit())continue;
-    UsartSendData((uint8_t*)UsartInitSuccessString, sizeof(UsartInitSuccessString), USART1);
+    while (UsartInit())
+        continue;
+    UsartSendData((uint8_t *)UsartInitSuccessString, sizeof(UsartInitSuccessString), USART1);
 
     char SpiInitSuccessString[] = "Spi init Success!\n";
     char SpiInitFailString[] = "Spi init Fail!\n";
-    if(!SpiInit())UsartSendData((uint8_t*)SpiInitSuccessString, sizeof(SpiInitSuccessString), USART1);
-    else UsartSendData((uint8_t*)SpiInitFailString, sizeof(SpiInitFailString), USART1);
+    if (!SpiInit())
+        UsartSendData((uint8_t *)SpiInitSuccessString, sizeof(SpiInitSuccessString), USART1);
+    else
+        UsartSendData((uint8_t *)SpiInitFailString, sizeof(SpiInitFailString), USART1);
 
     char ExtFlashCheckPassString[] = "External Flash self check pass!\n";
     char ExtFlashCheckFailString[] = "External Flash self check fail!\n";
-    if(!ExternFlashInit())UsartSendData((uint8_t*)ExtFlashCheckPassString, sizeof(ExtFlashCheckPassString), USART1);
-    else UsartSendData((uint8_t*)ExtFlashCheckFailString, sizeof(ExtFlashCheckFailString), USART1);
+    if (!ExternFlashInit())
+        UsartSendData((uint8_t *)ExtFlashCheckPassString, sizeof(ExtFlashCheckPassString), USART1);
+    else
+        UsartSendData((uint8_t *)ExtFlashCheckFailString, sizeof(ExtFlashCheckFailString), USART1);
 
     uint8_t data;
-    while(1){
-        if(UsartReceiveData(&data, 1, USART1))UsartSendData(&data, 1, USART2);
-        if(UsartReceiveData(&data, 1, USART2))UsartSendData(&data, 1, USART1);
+    while (1)
+    {
+        if (UsartReceiveData(&data, 1, USART1))
+            UsartSendData(&data, 1, USART2);
+        if (UsartReceiveData(&data, 1, USART2))
+        {
+            UsartSendData(&data, 1, USART1);
+            ProcessBluetoothData(&data);
+        }
     }
     return 0;
+}
+
+char buffer[6];
+int received = 0;
+
+void ProcessBluetoothData(uint8_t *data)
+{
+    if (data == '@')
+    {
+        received = 1;
+    }
+    else if (received == 7)
+    {
+        if (data == '$')
+        {
+            color c;
+            HexToColor(buffer, &c);
+            // SetLight(&c);
+        }
+
+        received = 0;
+    }
+    else if (received)
+    {
+        buffer[received - 1] = data;
+        received++;
+    }
 }
