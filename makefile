@@ -20,14 +20,14 @@ C_RELEASE_FLAGS := -Os
 #BIN_PATH is used to save binary/hex file generated finally
 ifeq ($(mode), debug)
 ifdef C_FLAGS
-C_FLAGS := $(C_FLAGS) $(C_DEBUG_FLAGS)
+C_FLAGS += $(C_DEBUG_FLAGS)
 else
 C_FLAGS := $(C_DEBUG_FLAGS)
 endif
 BIN_PATH := ./Debug
 else ifeq ($(mode), release)
 ifdef C_FLAGS
-C_FLAGS := $(C_FLAGS) $(C_RELEASE_FLAGS)
+C_FLAGS += $(C_RELEASE_FLAGS)
 else
 C_FLAGS := $(C_RELEASE_FLAGS)
 endif
@@ -83,8 +83,8 @@ $(addprefix $(OBJ_PATH)/, $(patsubst %.s, %.o, $(notdir $(ASM_SRC))))
 
 INC_FLAGS := -I $(C_INC_PATH) -I $(LIB_INC_PATH) -I $(CORE_INC_PATH)
 
-C_FLAGS := $(C_FLAGS) -W -Wall -mcpu=cortex-m3 -mthumb --specs=nosys.specs \
--D $(DEVICE) -D USE_FULL_LL_DRIVER $(INC_FLAGS) 
+C_FLAGS += -W -Wall -mcpu=cortex-m3 -mthumb --specs=nosys.specs -ffunction-sections \
+-fdata-sections -Wl,--gc-sections -D $(DEVICE) -D USE_FULL_LL_DRIVER $(INC_FLAGS) 
 
 
 ########################### make #################################

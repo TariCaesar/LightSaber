@@ -26,7 +26,7 @@ typedef struct{
 }UsartTxBuffer;
 
 int32_t UsartInit();
-int32_t UsartReceiveData(uint8_t* addr_dst, int32_t size, USART_TypeDef* usartTarget);
-int32_t UsartSendData(uint8_t* addr_src, int32_t size, USART_TypeDef* usartTarget);
+uint32_t UsartReceiveData(uint8_t* addr_dst, uint32_t size, USART_TypeDef* usartTarget);
+uint32_t UsartSendData(uint8_t* addr_src, uint32_t size, USART_TypeDef* usartTarget);
 void USART1_IRQHandler();
 #endif

@@ -11,6 +11,7 @@ int32_t UsartInit(){
     if(!LL_APB2_GRP1_IsEnabledClock(LL_APB2_GRP1_PERIPH_GPIOA)){
         LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOA);
     }
+
     //GPIO AF configuration
     //USART1 Tx is PA9, USART2 Tx is PA2, configure into af output
     LL_GPIO_InitTypeDef usartGpioInit;
@@ -46,13 +47,18 @@ int32_t UsartInit(){
     usartInit.OverSampling = LL_USART_OVERSAMPLING_16;
     LL_USART_Init(USART1, &usartInit);
     LL_USART_Init(USART2, &usartInit);
-    //Enable Usart2 TxDMA
-    LL_USART_EnableDMAReq_TX(USART1);
-    LL_USART_EnableDMAReq_TX(USART2);
 
     //Set usart into asysn mode
     LL_USART_ConfigAsyncMode(USART1);
     LL_USART_ConfigAsyncMode(USART2);
+
+    //Enable dma clock
+    if(!LL_AHB1_GRP1_IsEnabledClock(LL_AHB1_GRP1_PERIPH_DMA1)){
+        LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA1);
+    }
+    //Enable Usart2 TxDMA
+    LL_USART_EnableDMAReq_TX(USART1);
+    LL_USART_EnableDMAReq_TX(USART2);
 
     //Init usart rx buffer
     usart1RxBuffer.head = 0;
@@ -145,9 +151,8 @@ static int32_t UsartTransmit(USART_TypeDef* usartTarget){
     return 0;
 }
 
-int32_t UsartReceiveData(uint8_t* addr_dst, int32_t size, USART_TypeDef* usartTarget){
-    int32_t i;
-    int32_t rxReceiveRemain;
+uint32_t UsartReceiveData(uint8_t* addr_dst, uint32_t size, USART_TypeDef* usartTarget){
+    uint32_t i, rxReceiveRemain;
     UsartRxBuffer* rxBuffer;
 
     if(usartTarget == USART1) rxBuffer = &usart1RxBuffer; 
@@ -166,9 +171,8 @@ int32_t UsartReceiveData(uint8_t* addr_dst, int32_t size, USART_TypeDef* usartTa
     return size;
 }
 
-int32_t UsartSendData(uint8_t* addr_src, int32_t size, USART_TypeDef* usartTarget){
-    int32_t i;
-    int32_t txBufferRemain;
+uint32_t UsartSendData(uint8_t* addr_src, uint32_t size, USART_TypeDef* usartTarget){
+    uint32_t i, txBufferRemain;
     UsartTxBuffer* txBuffer;
 
     if(usartTarget == USART1) txBuffer = &usart1TxBuffer;

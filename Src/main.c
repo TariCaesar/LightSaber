@@ -20,8 +20,6 @@ int main()
 
     //Set priorityGroup to 2 for all the system
     NVIC_SetPriorityGrouping(2);
-    //Enable dma clock
-    LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA1);
 
     //after init, print clk information and usart init complete
     char UsartInitSuccessString[] = "Usart init Success!\n";
