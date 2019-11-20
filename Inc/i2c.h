@@ -10,6 +10,6 @@
 #define I2C_REQUEST_READ 0x01
 
 int32_t I2cInit();
-uint32_t I2cWrite(uint8_t deviceAddr, uint8_t* addrSrc, uint32_t dataSize);
-uint32_t I2cRead(uint8_t deviceAddr, uint8_t* addrDst, uint32_t dataSize);
+uint32_t I2cWrite(uint8_t deviceAddr, uint8_t *addrSrc, uint32_t dataSize);
+uint8_t I2cRead(uint8_t deviceAddr, uint8_t regAddr);
 #endif

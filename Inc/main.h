@@ -10,5 +10,6 @@
 #include "spi.h"
 #include "usart.h"
 #include "extern_flash.h"
+#include "mpu6050.h"
 
 #endif

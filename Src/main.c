@@ -42,9 +42,17 @@ int main()
     else
         UsartSendData((uint8_t *)ExtFlashCheckFailString, sizeof(ExtFlashCheckFailString), USART1);
 
+    MpuInit();
+
     uint8_t data;
     while (1)
     {
+
+        int16_t mpuData = MpuGetData(ACCEL_XOUT_H);
+        char mpuStr[10] = {0};
+        sprintf(mpuStr, "%d\n", mpuData);
+        UsartSendData((uint8_t *)mpuStr, sizeof(mpuStr), USART1);
+
         if (UsartReceiveData(&data, 1, USART1))
             UsartSendData(&data, 1, USART2);
         if (UsartReceiveData(&data, 1, USART2))
