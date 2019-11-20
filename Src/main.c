@@ -1,7 +1,8 @@
+#include <stdio.h>
 #include "main.h"
 #include "helper.h"
 
-void ProcessBluetoothData(uint8_t *data);
+void ProcessBluetoothData(char data);
 
 int main()
 {
@@ -49,7 +50,7 @@ int main()
         if (UsartReceiveData(&data, 1, USART2))
         {
             UsartSendData(&data, 1, USART1);
-            ProcessBluetoothData(&data);
+            ProcessBluetoothData(data);
         }
     }
     return 0;
@@ -58,7 +59,7 @@ int main()
 char buffer[6];
 int received = 0;
 
-void ProcessBluetoothData(uint8_t *data)
+void ProcessBluetoothData(char data)
 {
     if (data == '@')
     {
@@ -70,7 +71,8 @@ void ProcessBluetoothData(uint8_t *data)
         {
             color c;
             HexToColor(buffer, &c);
-            // SetLight(&c);
+
+            // setColor(c);
         }
 
         received = 0;
