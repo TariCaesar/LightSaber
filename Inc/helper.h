@@ -1,4 +1,4 @@
-#include "stm32f103xb.h"
+#include "stm32f103xe.h"
 
 typedef struct
 {
@@ -7,4 +7,4 @@ typedef struct
     uint8_t b;
 } color;
 
-void HexToColor(const char *hexString, color *result);
+void HexToColor(const char* hexString, color* result);

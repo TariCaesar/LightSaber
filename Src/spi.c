@@ -1,12 +1,12 @@
 #include "spi.h"
 
-int32_t SpiInit(){
+int32_t SpiInit()
+{
     //check the GPIOB clock status
     //if not open, open it
-    if(!LL_APB2_GRP1_IsEnabledClock(LL_APB2_GRP1_PERIPH_GPIOB)){
+    if(!LL_APB2_GRP1_IsEnabledClock(LL_APB2_GRP1_PERIPH_GPIOB)) {
         LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOB);
     }
-
 
     LL_GPIO_InitTypeDef spi2GpioInit;
     //PB13 is CLK for spi, PB15 is MOSI, configure into af output
@@ -20,12 +20,11 @@ int32_t SpiInit(){
     spi2GpioInit.Pin = LL_GPIO_PIN_14;
     spi2GpioInit.Mode = LL_GPIO_MODE_INPUT;
     LL_GPIO_Init(GPIOB, &spi2GpioInit);
-    //PB12 is SS for spi, configure into normal output
+    //PB12 is SS for spi, configure into push-pull output
     spi2GpioInit.Pin = LL_GPIO_PIN_12;
     spi2GpioInit.Mode = LL_GPIO_MODE_OUTPUT;
     LL_GPIO_Init(GPIOB, &spi2GpioInit);
     LL_GPIO_WriteOutputPort(GPIOB, LL_GPIO_ReadOutputPort(GPIOB) | 0x1000);
-
 
     LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_SPI2);
 
@@ -35,7 +34,7 @@ int32_t SpiInit(){
     spi2Init.DataWidth = LL_SPI_DATAWIDTH_8BIT;
     //Set prescale=2, means spi2 clock=18MHz
     spi2Init.BaudRate = LL_SPI_BAUDRATEPRESCALER_DIV2;
-    spi2Init.BitOrder= LL_SPI_MSB_FIRST;
+    spi2Init.BitOrder = LL_SPI_MSB_FIRST;
     spi2Init.ClockPhase = LL_SPI_PHASE_2EDGE;
     spi2Init.ClockPolarity = LL_SPI_POLARITY_HIGH;
     spi2Init.TransferDirection = LL_SPI_FULL_DUPLEX;
@@ -48,16 +47,16 @@ int32_t SpiInit(){
     //Enable SPI2
     LL_SPI_Enable(SPI2);
 
-    //Active SPI
-    SpiWriteReadByte(0xff);
-    
     return 0;
 }
 
 //Must enable CS signal before use this function
-uint8_t SpiWriteReadByte(uint8_t dataWrite){
-    while(!LL_SPI_IsActiveFlag_TXE(SPI2));
+uint8_t SpiWriteReadByte(uint8_t dataWrite)
+{
+    while(!LL_SPI_IsActiveFlag_TXE(SPI2))
+        continue;
     LL_SPI_TransmitData8(SPI2, dataWrite);
-    while(!LL_SPI_IsActiveFlag_RXNE(SPI2));
+    while(!LL_SPI_IsActiveFlag_RXNE(SPI2))
+        continue;
     return LL_SPI_ReceiveData8(SPI2);
 }

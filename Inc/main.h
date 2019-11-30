@@ -1,15 +1,15 @@
 #ifndef MAIN_H
 #define MAIN_H
 
-#include "stm32f103xb.h"
-#include "stm32f1xx_ll_utils.h"
+#include "extern_flash.h"
+#include "helper.h"
+#include "i2c.h"
+#include "mpu6050.h"
+#include "spi.h"
+#include "stm32f103xe.h"
 #include "stm32f1xx_ll_bus.h"
 #include "stm32f1xx_ll_rcc.h"
-#include "gpio.h"
-#include "i2c.h"
-#include "spi.h"
+#include "stm32f1xx_ll_utils.h"
 #include "usart.h"
-#include "extern_flash.h"
-#include "mpu6050.h"
 
 #endif

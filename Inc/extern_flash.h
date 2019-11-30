@@ -13,4 +13,3 @@
 
 int32_t ExternFlashInit();
 #endif
-

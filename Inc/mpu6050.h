@@ -3,7 +3,7 @@
 
 #include "i2c.h"
 
-#define MPU_ADDRESS 0x68
+#define MPU_ADDRESS 0x69
 
 #define MPU_SMPRTDIV 0x19
 #define MPU_CONFIG 0x1A
@@ -28,7 +28,7 @@
 #define GYRO_ZOUT_H 0x47
 #define GYRO_ZOUT_L 0x48
 
-void MpuInit();
+int32_t MpuInit();
 int16_t MpuGetData(uint8_t regAddr);
 
 #endif

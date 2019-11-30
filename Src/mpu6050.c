@@ -26,17 +26,17 @@ int16_t MpuGetData(uint8_t regAddr)
     return data;
 }
 
-void MpuInit()
+int32_t MpuInit()
 {
     //check if I2C2 is enable
     //if not, init I2C2
-    if (!LL_I2C_IsEnabled(I2C2))
+    if(!LL_I2C_IsEnabled(I2C2))
         I2cInit();
 
     //init mpu6050
     //reset mpu6050
     MpuWriteReg(MPU_PWRREG1, 0x80);
-    while (MpuReadReg(MPU_PWRREG1) & 0x80)
+    while(MpuReadReg(MPU_PWRREG1) & 0x80)
         continue;
 
     //set mpu6050 into nonsleepmode, choose X gyroscope as source
@@ -46,4 +46,5 @@ void MpuInit()
     //set full range to 250degree and 2g
     MpuWriteReg(MPU_GYROCONFIG, 0x00);
     MpuWriteReg(MPU_ACCELCONFIG, 0x00);
+    return 0;
 }

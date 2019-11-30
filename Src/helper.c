@@ -1,11 +1,10 @@
-#include <string.h>
-#include <stdlib.h>
 #include "helper.h"
+#include <stdlib.h>
+#include <string.h>
 
-void HexToColor(const char *hexString, color *result)
+void HexToColor(const char* hexString, color* result)
 {
-    if (strlen(hexString) != 6)
-    {
+    if(strlen(hexString) != 6) {
         return;
     }
 

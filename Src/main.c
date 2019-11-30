@@ -1,6 +1,4 @@
-#include <stdio.h>
 #include "main.h"
-#include "helper.h"
 
 void ProcessBluetoothData(char data);
 
@@ -24,39 +22,36 @@ int main()
 
     //after init, print clk information and usart init complete
     char UsartInitSuccessString[] = "Usart init Success!\n";
-    while (UsartInit())
+    while(UsartInit())
         continue;
-    UsartSendData((uint8_t *)UsartInitSuccessString, sizeof(UsartInitSuccessString), USART1);
+    UsartSendData((uint8_t*)UsartInitSuccessString, sizeof(UsartInitSuccessString), USART1);
 
     char SpiInitSuccessString[] = "Spi init Success!\n";
     char SpiInitFailString[] = "Spi init Fail!\n";
-    if (!SpiInit())
-        UsartSendData((uint8_t *)SpiInitSuccessString, sizeof(SpiInitSuccessString), USART1);
+    if(!SpiInit())
+        UsartSendData((uint8_t*)SpiInitSuccessString, sizeof(SpiInitSuccessString), USART1);
     else
-        UsartSendData((uint8_t *)SpiInitFailString, sizeof(SpiInitFailString), USART1);
+        UsartSendData((uint8_t*)SpiInitFailString, sizeof(SpiInitFailString), USART1);
 
     char ExtFlashCheckPassString[] = "External Flash self check pass!\n";
     char ExtFlashCheckFailString[] = "External Flash self check fail!\n";
-    if (!ExternFlashInit())
-        UsartSendData((uint8_t *)ExtFlashCheckPassString, sizeof(ExtFlashCheckPassString), USART1);
+    if(!ExternFlashInit())
+        UsartSendData((uint8_t*)ExtFlashCheckPassString, sizeof(ExtFlashCheckPassString), USART1);
     else
-        UsartSendData((uint8_t *)ExtFlashCheckFailString, sizeof(ExtFlashCheckFailString), USART1);
+        UsartSendData((uint8_t*)ExtFlashCheckFailString, sizeof(ExtFlashCheckFailString), USART1);
 
-    MpuInit();
+    char MpuCheckPassString[] = "Mpu self check pass!\n";
+    char MpuCheckFailString[] = "Mpu self check fail!\n";
+    if(!MpuInit())
+        UsartSendData((uint8_t*)MpuCheckPassString, sizeof(MpuCheckPassString), USART1);
+    else
+        UsartSendData((uint8_t*)MpuCheckFailString, sizeof(MpuCheckFailString), USART1);
 
     uint8_t data;
-    while (1)
-    {
-
-        int16_t mpuData = MpuGetData(ACCEL_XOUT_H);
-        char mpuStr[10] = {0};
-        sprintf(mpuStr, "%d\n", mpuData);
-        UsartSendData((uint8_t *)mpuStr, sizeof(mpuStr), USART1);
-
-        if (UsartReceiveData(&data, 1, USART1))
+    while(1) {
+        if(UsartReceiveData(&data, 1, USART1))
             UsartSendData(&data, 1, USART2);
-        if (UsartReceiveData(&data, 1, USART2))
-        {
+        if(UsartReceiveData(&data, 1, USART2)) {
             UsartSendData(&data, 1, USART1);
             ProcessBluetoothData(data);
         }
@@ -69,14 +64,11 @@ int received = 0;
 
 void ProcessBluetoothData(char data)
 {
-    if (data == '@')
-    {
+    if(data == '@') {
         received = 1;
     }
-    else if (received == 7)
-    {
-        if (data == '$')
-        {
+    else if(received == 7) {
+        if(data == '$') {
             color c;
             HexToColor(buffer, &c);
 
@@ -85,8 +77,7 @@ void ProcessBluetoothData(char data)
 
         received = 0;
     }
-    else if (received)
-    {
+    else if(received) {
         buffer[received - 1] = data;
         received++;
     }
