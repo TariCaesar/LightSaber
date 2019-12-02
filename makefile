@@ -59,7 +59,7 @@ CORE_INC_PATH := ./Lib/Core/Inc
 LIB_INC_PATH := ./Lib/StdPeriph/Inc
 
 #LINK_FILE specify the linker file used in ld
-LINK_FILE := ./Lib/Core/STM32F103XE_FLASH.ld
+LINK_FILE := ./Lib/Core/STM32F105XC_FLASH.ld
 
 CORE_C_SRC := $(wildcard $(CORE_SRC_PATH)/*.c)
 CORE_ASM_SRC := $(wildcard $(CORE_SRC_PATH)/*.s)
