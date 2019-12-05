@@ -46,5 +46,8 @@ int32_t MpuInit()
     //set full range to 250degree and 2g
     MpuWriteReg(MPU_GYROCONFIG, 0x00);
     MpuWriteReg(MPU_ACCELCONFIG, 0x00);
+
+    SetMystdioTarget(USART2);
+    MyPrintf("Mpu6050 init success!\n");
     return 0;
 }

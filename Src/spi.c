@@ -47,6 +47,8 @@ int32_t SpiInit()
     //Enable SPI2
     LL_SPI_Enable(SPI2);
 
+    SetMystdioTarget(USART2);
+    MyPrintf("Spi init success!\n");
     return 0;
 }
 

@@ -2,6 +2,7 @@
 #define MPU6050_H
 
 #include "i2c.h"
+#include "mystdio.h"
 
 #define MPU_ADDRESS 0x69
 

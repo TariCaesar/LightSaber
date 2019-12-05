@@ -2,9 +2,6 @@
 
 #define EXTERN_FLASH_PAGE_SIZE 128
 
-static uint8_t externFlashBufferPing[EXTERN_FLASH_PAGE_SIZE];
-static uint8_t externFlashBufferPong[EXTERN_FLASH_PAGE_SIZE];
-
 static int32_t FlashUnlock()
 {
     //Write Enable
@@ -149,11 +146,20 @@ int32_t ExternFlashInit()
     if(!LL_SPI_IsEnabled(SPI2)) SpiInit();
     if(FlashSelfCheck()) {
         FlashConfig();
-        if(FlashSelfCheck())
+        if(FlashSelfCheck()) {
+            SetMystdioTarget(USART2);
+            MyPrintf("External Flash self check fail!\n");
             return 1;
-        else
+        }
+        else {
+            SetMystdioTarget(USART2);
+            MyPrintf("External Flash self check pass!\n");
             return 0;
+        }
     }
-    else
+    else {
+        SetMystdioTarget(USART2);
+        MyPrintf("External Flash self check pass!\n");
         return 0;
+    }
 }

@@ -1,9 +1,54 @@
 #include "usart.h"
 
+typedef struct {
+    uint8_t data[USART_RX_BUFFER_SIZE];
+    uint32_t head;
+    uint32_t tail;
+} UsartRxBuffer;
+
+typedef struct {
+    uint8_t data[USART_TX_BUFFER_SIZE];
+    uint32_t head;
+    uint32_t tail;
+    uint32_t tailNext;
+} UsartTxBuffer;
+
 static UsartRxBuffer usart1RxBuffer;
 static UsartTxBuffer usart1TxBuffer;
 static UsartRxBuffer usart2RxBuffer;
 static UsartTxBuffer usart2TxBuffer;
+
+int32_t UsartTxBufferIsFull(USART_TypeDef* usartTarget)
+{
+    UsartTxBuffer* txBuffer;
+    if(usartTarget == USART1)
+        txBuffer = &usart1TxBuffer;
+    else if(usartTarget == USART2)
+        txBuffer = &usart2TxBuffer;
+    else
+        return 0;
+
+    if((txBuffer->head + 1) % USART_TX_BUFFER_SIZE == txBuffer->tail)
+        return 1;
+    else
+        return 0;
+}
+
+int32_t UsartRxBufferIsEmpty(USART_TypeDef* usartTarget)
+{
+    UsartRxBuffer* rxBuffer;
+    if(usartTarget == USART1)
+        rxBuffer = &usart1RxBuffer;
+    else if(usartTarget == USART2)
+        rxBuffer = &usart2RxBuffer;
+    else
+        return 0;
+
+    if(rxBuffer->head == rxBuffer->tail)
+        return 1;
+    else
+        return 0;
+}
 
 int32_t UsartInit()
 {
@@ -94,6 +139,8 @@ int32_t UsartInit()
     LL_USART_Enable(USART1);
     LL_USART_Enable(USART2);
 
+    SetMystdioTarget(USART2);
+    MyPrintf("Usart init success!\n");
     return 0;
 }
 
@@ -139,11 +186,10 @@ static int32_t UsartTransmit(USART_TypeDef* usartTarget)
             usartTxDmaInit.NbData = txBuffer->head - txBuffer->tail;
             txBuffer->tailNext = txBuffer->head;
         }
-        uint32_t dmaChannel = (usartTarget == USART1) ? LL_DMA_CHANNEL_4 : LL_DMA_CHANNEL_7;
-        LL_DMA_Init(DMA1, dmaChannel, &usartTxDmaInit);
+        uint32_t usartDmaChannel = (usartTarget == USART1) ? LL_DMA_CHANNEL_4 : LL_DMA_CHANNEL_7;
+        LL_DMA_Init(DMA1, usartDmaChannel, &usartTxDmaInit);
         //Enable Channl for DMA1
-        LL_DMA_EnableChannel(DMA1, dmaChannel);
-        //Clear USART TC Interrupt flag
+        LL_DMA_EnableChannel(DMA1, usartDmaChannel);
     }
     //Clear USART1 TC Interrupt flag
     LL_USART_ClearFlag_TC(usartTarget);
@@ -166,7 +212,7 @@ uint32_t UsartReceiveData(uint8_t* addr_dst, uint32_t size, USART_TypeDef* usart
 
     rxReceiveRemain =
         (rxBuffer->head < rxBuffer->tail) ? (rxBuffer->head + USART_RX_BUFFER_SIZE - rxBuffer->tail) : (rxBuffer->head - rxBuffer->tail);
-    if(rxReceiveRemain < size) return 0;
+    if(rxReceiveRemain < size) size = rxReceiveRemain;
     for(i = 0; i < size; ++i) {
         addr_dst[i] = rxBuffer->data[rxBuffer->tail];
         rxBuffer->tail = (rxBuffer->tail + 1) % USART_RX_BUFFER_SIZE;
@@ -189,7 +235,7 @@ uint32_t UsartSendData(uint8_t* addr_src, uint32_t size, USART_TypeDef* usartTar
     //check if buffer is large enough
     txBufferRemain =
         (txBuffer->head < txBuffer->tail) ? (txBuffer->tail - txBuffer->head - 1) : (USART_TX_BUFFER_SIZE - txBuffer->head + txBuffer->tail - 1);
-    if(txBufferRemain < size) return 0;
+    if(txBufferRemain < size) size = txBufferRemain;
     for(i = 0; i < size; ++i) {
         txBuffer->data[txBuffer->head] = addr_src[i];
         txBuffer->head = (txBuffer->head + 1) % USART_TX_BUFFER_SIZE;

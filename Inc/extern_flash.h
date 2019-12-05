@@ -1,6 +1,7 @@
 #ifndef EXTERN_FLASH_H
 #define EXTERN_FLASH_H
 
+#include "mystdio.h"
 #include "spi.h"
 
 #define FLASH_CMD_WRITEENABLE 0x06

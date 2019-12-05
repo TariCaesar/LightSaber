@@ -50,6 +50,8 @@ int32_t I2cInit()
 
     LL_I2C_Enable(I2C2);
 
+    SetMystdioTarget(USART2);
+    MyPrintf("I2c init success!\n");
     return 0;
 }
 

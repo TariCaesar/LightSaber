@@ -1,6 +1,7 @@
 #ifndef SPI_H
 #define SPI_H
 
+#include "mystdio.h"
 #include "stm32f1xx.h"
 #include "stm32f1xx_ll_bus.h"
 #include "stm32f1xx_ll_gpio.h"

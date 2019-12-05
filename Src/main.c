@@ -21,39 +21,23 @@ int main()
     //Set priorityGroup to 2 for all the system
     NVIC_SetPriorityGrouping(2);
 
-    //after init, print clk information and usart init complete
-    char UsartInitSuccessString[] = "Usart init Success!\n";
-    while(UsartInit())
-        continue;
-    UsartSendData((uint8_t*)UsartInitSuccessString, sizeof(UsartInitSuccessString), USART2);
-
-    char SpiInitSuccessString[] = "Spi init Success!\n";
-    char SpiInitFailString[] = "Spi init Fail!\n";
-    if(!SpiInit())
-        UsartSendData((uint8_t*)SpiInitSuccessString, sizeof(SpiInitSuccessString), USART2);
-    else
-        UsartSendData((uint8_t*)SpiInitFailString, sizeof(SpiInitFailString), USART2);
-
-    char ExtFlashCheckPassString[] = "External Flash self check pass!\n";
-    char ExtFlashCheckFailString[] = "External Flash self check fail!\n";
-    if(!ExternFlashInit())
-        UsartSendData((uint8_t*)ExtFlashCheckPassString, sizeof(ExtFlashCheckPassString), USART2);
-    else
-        UsartSendData((uint8_t*)ExtFlashCheckFailString, sizeof(ExtFlashCheckFailString), USART2);
-
-    //char MpuCheckPassString[] = "Mpu self check pass!\n";
-    //char MpuCheckFailString[] = "Mpu self check fail!\n";
-    //if(!MpuInit())
-    //    UsartSendData((uint8_t*)MpuCheckPassString, sizeof(MpuCheckPassString), USART1);
-    //else
-    //    UsartSendData((uint8_t*)MpuCheckFailString, sizeof(MpuCheckFailString), USART1);
+    UsartInit();
+    AudioInit();
+    //MpuInit();
 
     uint8_t data;
     while(1) {
-        if(UsartReceiveData(&data, 1, USART1))
-            UsartSendData(&data, 1, USART2);
-        if(UsartReceiveData(&data, 1, USART2)) {
-            UsartSendData(&data, 1, USART1);
+        SetMystdioTarget(USART2);
+        if(!MystdinBufferIsEmpty()){
+            data = MyGetchar();
+            SetMystdioTarget(USART1);
+            MyPutchar(data);
+        }
+        SetMystdioTarget(USART1);
+        if(!MystdinBufferIsEmpty()){
+            data = MyGetchar();
+            SetMystdioTarget(USART2);
+            MyPutchar(data);
             ProcessBluetoothData(data);
         }
     }
