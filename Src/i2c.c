@@ -112,7 +112,7 @@ void I2C2_EV_IRQHandler()
         LL_I2C_TransmitData8(I2C2, (I2cTransmitRequst.deviceAddr << 1) & I2C_REQUEST_WRITE);
     }
     else if(LL_I2C_IsActiveFlag_ADDR(I2C2)) {
-        LL_I2C_TransmitData8(I2C2, (I2cTransmitRequst.addrSrc++));
+        LL_I2C_TransmitData8(I2C2, *(I2cTransmitRequst.addrSrc++));
         --I2cTransmitRequst.cntSrc;
     }
     else if(LL_I2C_IsActiveFlag_TXE(I2C2)) {
@@ -120,7 +120,7 @@ void I2C2_EV_IRQHandler()
             LL_I2C_GenerateStopCondition(I2C2);
         }
         else {
-            LL_I2C_TransmitData8(I2C2, (I2cTransmitRequst.addrSrc++));
+            LL_I2C_TransmitData8(I2C2, *(I2cTransmitRequst.addrSrc++));
             --I2cTransmitRequst.cntSrc;
         }
     }

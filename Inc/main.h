@@ -6,7 +6,7 @@
 #include "i2c.h"
 #include "mpu6050.h"
 #include "spi.h"
-#include "stm32f103xe.h"
+#include "stm32f1xx.h"
 #include "stm32f1xx_ll_bus.h"
 #include "stm32f1xx_ll_rcc.h"
 #include "stm32f1xx_ll_utils.h"

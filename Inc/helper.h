@@ -1,4 +1,4 @@
-#include "stm32f103xe.h"
+#include "stm32f1xx.h"
 
 typedef struct
 {

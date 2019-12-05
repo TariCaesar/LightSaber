@@ -1,31 +1,36 @@
 CC := arm-none-eabi-gcc
 OBJCOPY := arm-none-eabi-objcopy
 
-
-# specify the device 
-DEVICE := STM32F103xE
+# specify link file according to device 
+ifeq ($(DEVICE), STM32F103xE)
+LINK_FILE := ./Lib/Core/STM32F1XX_HD.ld
+else ifeq ($(DEVICE), STM32F103xB)
+LINK_FILE := ./Lib/Core/STM32F1XX_MD.ld
+else
+$(error 'DEVICE' should be 'STM32F103xE' or 'STM32F103xB')
+endif
 
 ifndef TARGET
 TARGET := out
 endif
 
-# specify debug or release mode
-ifndef mode
-mode := debug
-endif
-
 C_DEBUG_FLAGS := -ggdb3 -gdwarf-4
 C_RELEASE_FLAGS := -Os
 
+# specify debug or release mode
+ifndef MODE
+MODE := DEBUG
+endif
+
 #BIN_PATH is used to save binary/hex file generated finally
-ifeq ($(mode), debug)
+ifeq ($(MODE), DEBUG)
 ifdef C_FLAGS
 C_FLAGS += $(C_DEBUG_FLAGS)
 else
 C_FLAGS := $(C_DEBUG_FLAGS)
 endif
 BIN_PATH := ./Debug
-else ifeq ($(mode), release)
+else ifeq ($(MODE), RELEASE)
 ifdef C_FLAGS
 C_FLAGS += $(C_RELEASE_FLAGS)
 else
@@ -33,7 +38,7 @@ C_FLAGS := $(C_RELEASE_FLAGS)
 endif
 BIN_PATH := ./Release
 else
-$(error "'mode' should be 'debug' or 'release')
+$(error 'MODE' should be 'DEBUG' or 'RELEASE')
 endif
 
 #OBJ_PATH is used to save object file temporarily
@@ -58,15 +63,17 @@ MY_INC_PATH := ./Inc
 CORE_INC_PATH := ./Lib/Core/Inc
 LIB_INC_PATH := ./Lib/StdPeriph/Inc
 
-#LINK_FILE specify the linker file used in ld
-LINK_FILE := ./Lib/Core/STM32F105XC_FLASH.ld
-
 CORE_C_SRC := $(wildcard $(CORE_SRC_PATH)/*.c)
-CORE_ASM_SRC := $(wildcard $(CORE_SRC_PATH)/*.s)
 LIB_C_SRC := $(wildcard $(LIB_SRC_PATH)/*.c)
 LIB_ASM_SRC := $(wildcard $(LIB_SRC_PATH)/*.s)
 MY_C_SRC := $(wildcard $(MY_SRC_PATH)/*.c)
 MY_ASM_SRC := $(wildcard $(MY_SRC_PATH)/*.s)
+
+ifeq ($(DEVICE), STM32F103xE)
+CORE_ASM_SRC := $(CORE_SRC_PATH)/startup_stm32f103xe.s
+else ifeq ($(DEVICE), STM32F103xB)
+CORE_ASM_SRC := $(CORE_SRC_PATH)/startup_stm32f103xb.s
+endif
 
 CORE_C_OBJ := \
 $(addprefix $(OBJ_PATH)/, $(patsubst %.c, %.o, $(notdir $(CORE_C_SRC))))
