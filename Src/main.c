@@ -15,7 +15,8 @@ int main()
     clkInit.APB1CLKDivider = LL_RCC_APB1_DIV_2;
     //Set APB2 the same as pll clk, 72MHz
     clkInit.APB2CLKDivider = LL_RCC_APB2_DIV_1;
-    LL_PLL_ConfigSystemClock_HSE(8000000u, LL_UTILS_HSEBYPASS_OFF, &pllInit, &clkInit);
+    LL_PLL_ConfigSystemClock_HSI(&pllInit, &clkInit);
+    //LL_PLL_ConfigSystemClock_HSE(8000000u, LL_UTILS_HSEBYPASS_OFF, &pllInit, &clkInit);
 
     //Set priorityGroup to 2 for all the system
     NVIC_SetPriorityGrouping(2);
@@ -24,28 +25,28 @@ int main()
     char UsartInitSuccessString[] = "Usart init Success!\n";
     while(UsartInit())
         continue;
-    UsartSendData((uint8_t*)UsartInitSuccessString, sizeof(UsartInitSuccessString), USART1);
+    UsartSendData((uint8_t*)UsartInitSuccessString, sizeof(UsartInitSuccessString), USART2);
 
     char SpiInitSuccessString[] = "Spi init Success!\n";
     char SpiInitFailString[] = "Spi init Fail!\n";
     if(!SpiInit())
-        UsartSendData((uint8_t*)SpiInitSuccessString, sizeof(SpiInitSuccessString), USART1);
+        UsartSendData((uint8_t*)SpiInitSuccessString, sizeof(SpiInitSuccessString), USART2);
     else
-        UsartSendData((uint8_t*)SpiInitFailString, sizeof(SpiInitFailString), USART1);
+        UsartSendData((uint8_t*)SpiInitFailString, sizeof(SpiInitFailString), USART2);
 
     char ExtFlashCheckPassString[] = "External Flash self check pass!\n";
     char ExtFlashCheckFailString[] = "External Flash self check fail!\n";
     if(!ExternFlashInit())
-        UsartSendData((uint8_t*)ExtFlashCheckPassString, sizeof(ExtFlashCheckPassString), USART1);
+        UsartSendData((uint8_t*)ExtFlashCheckPassString, sizeof(ExtFlashCheckPassString), USART2);
     else
-        UsartSendData((uint8_t*)ExtFlashCheckFailString, sizeof(ExtFlashCheckFailString), USART1);
+        UsartSendData((uint8_t*)ExtFlashCheckFailString, sizeof(ExtFlashCheckFailString), USART2);
 
-    char MpuCheckPassString[] = "Mpu self check pass!\n";
-    char MpuCheckFailString[] = "Mpu self check fail!\n";
-    if(!MpuInit())
-        UsartSendData((uint8_t*)MpuCheckPassString, sizeof(MpuCheckPassString), USART1);
-    else
-        UsartSendData((uint8_t*)MpuCheckFailString, sizeof(MpuCheckFailString), USART1);
+    //char MpuCheckPassString[] = "Mpu self check pass!\n";
+    //char MpuCheckFailString[] = "Mpu self check fail!\n";
+    //if(!MpuInit())
+    //    UsartSendData((uint8_t*)MpuCheckPassString, sizeof(MpuCheckPassString), USART1);
+    //else
+    //    UsartSendData((uint8_t*)MpuCheckFailString, sizeof(MpuCheckFailString), USART1);
 
     uint8_t data;
     while(1) {
