@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "mystdio.h"
 
 USART_TypeDef* usartTarget = USART2;

@@ -18,38 +18,6 @@ static UsartTxBuffer usart1TxBuffer;
 static UsartRxBuffer usart2RxBuffer;
 static UsartTxBuffer usart2TxBuffer;
 
-int32_t UsartTxBufferIsFull(USART_TypeDef* usartTarget)
-{
-    UsartTxBuffer* txBuffer;
-    if(usartTarget == USART1)
-        txBuffer = &usart1TxBuffer;
-    else if(usartTarget == USART2)
-        txBuffer = &usart2TxBuffer;
-    else
-        return 0;
-
-    if((txBuffer->head + 1) % USART_TX_BUFFER_SIZE == txBuffer->tail)
-        return 1;
-    else
-        return 0;
-}
-
-int32_t UsartRxBufferIsEmpty(USART_TypeDef* usartTarget)
-{
-    UsartRxBuffer* rxBuffer;
-    if(usartTarget == USART1)
-        rxBuffer = &usart1RxBuffer;
-    else if(usartTarget == USART2)
-        rxBuffer = &usart2RxBuffer;
-    else
-        return 0;
-
-    if(rxBuffer->head == rxBuffer->tail)
-        return 1;
-    else
-        return 0;
-}
-
 int32_t UsartInit()
 {
     //check the GPIOA clock status
@@ -132,7 +100,7 @@ int32_t UsartInit()
     //Enable USART in NVIC
     NVIC_SetPriority(USART1_IRQn, NVIC_EncodePriority(2, 3, 1));
     NVIC_EnableIRQ(USART1_IRQn);
-    NVIC_SetPriority(USART2_IRQn, NVIC_EncodePriority(2, 3, 2));
+    NVIC_SetPriority(USART2_IRQn, NVIC_EncodePriority(2, 3, 1));
     NVIC_EnableIRQ(USART2_IRQn);
 
     //Enable Usart
@@ -142,6 +110,38 @@ int32_t UsartInit()
     SetMystdioTarget(USART2);
     MyPrintf("Usart init success!\n");
     return 0;
+}
+
+int32_t UsartTxBufferIsFull(USART_TypeDef* usartTarget)
+{
+    UsartTxBuffer* txBuffer;
+    if(usartTarget == USART1)
+        txBuffer = &usart1TxBuffer;
+    else if(usartTarget == USART2)
+        txBuffer = &usart2TxBuffer;
+    else
+        return 0;
+
+    if((txBuffer->head + 1) % USART_TX_BUFFER_SIZE == txBuffer->tail)
+        return 1;
+    else
+        return 0;
+}
+
+int32_t UsartRxBufferIsEmpty(USART_TypeDef* usartTarget)
+{
+    UsartRxBuffer* rxBuffer;
+    if(usartTarget == USART1)
+        rxBuffer = &usart1RxBuffer;
+    else if(usartTarget == USART2)
+        rxBuffer = &usart2RxBuffer;
+    else
+        return 0;
+
+    if(rxBuffer->head == rxBuffer->tail)
+        return 1;
+    else
+        return 0;
 }
 
 static int32_t UsartTransmit(USART_TypeDef* usartTarget)

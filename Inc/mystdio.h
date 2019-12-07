@@ -2,7 +2,6 @@
 #define MYSTDIO_H
 
 #include "usart.h"
-#include <stdio.h>
 
 int32_t SetMystdioTarget(USART_TypeDef* usartTarget);
 

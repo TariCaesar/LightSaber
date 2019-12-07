@@ -52,13 +52,11 @@ int32_t SpiInit()
     return 0;
 }
 
-//Must enable CS signal before use this function
+//Must enable CS signal before use this function and disable CS after a frame transfermation complete
 uint8_t SpiWriteReadByte(uint8_t dataWrite)
 {
-    while(!LL_SPI_IsActiveFlag_TXE(SPI2))
-        continue;
+    while(!LL_SPI_IsActiveFlag_TXE(SPI2))continue;
     LL_SPI_TransmitData8(SPI2, dataWrite);
-    while(!LL_SPI_IsActiveFlag_RXNE(SPI2))
-        continue;
+    while(!LL_SPI_IsActiveFlag_RXNE(SPI2))continue;
     return LL_SPI_ReceiveData8(SPI2);
 }

@@ -6,7 +6,6 @@
 #include "stm32f1xx_ll_dma.h"
 #include "stm32f1xx_ll_gpio.h"
 #include "stm32f1xx_ll_usart.h"
-
 #include "mystdio.h"
 
 //due to our full judgement alogrithm, buffer size is 1 less than them
