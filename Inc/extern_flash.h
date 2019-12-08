@@ -1,7 +1,9 @@
 #ifndef EXTERN_FLASH_H
 #define EXTERN_FLASH_H
 
+#include "system.h"
 #include "mystdio.h"
+#include "usart.h"
 #include "spi.h"
 
 #define EXTERN_FLASH_PAGE_SIZE 256u
@@ -21,4 +23,6 @@
 #define FLASH_CMD_WRITEPAGE 0x02
 
 int32_t ExternFlashInit();
+int32_t FlashRead(uint32_t addr, uint8_t* addrDst, int32_t size);
+
 #endif

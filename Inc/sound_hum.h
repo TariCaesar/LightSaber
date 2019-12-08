@@ -1,4 +1,4 @@
-#include "stm32f1xx.h"
+#include <stdint.h>
 
 const int16_t data[30720] = {
 1560,

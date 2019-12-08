@@ -1,3 +1,6 @@
+#ifndef HELPER_H
+#define HELPER_H
+
 #include "stm32f1xx.h"
 
 typedef struct
@@ -8,3 +11,5 @@ typedef struct
 } color;
 
 void HexToColor(const char* hexString, color* result);
+
+#endif

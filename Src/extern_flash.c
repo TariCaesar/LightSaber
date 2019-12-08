@@ -1,11 +1,8 @@
 #include "extern_flash.h"
 
-#include "sound_open.h"
-
 static int32_t FlashIsBusy()
 {
     uint8_t flashStatus;
-    for(int32_t i = 0; i < 3600000; ++i)continue;
     SpiSSEnable();
     SpiWriteReadByte(FLASH_CMD_READREG1);
     flashStatus = SpiWriteReadByte(0xff);
@@ -85,7 +82,7 @@ static int32_t FlashSectorErase(uint32_t addr)
     return 0;
 }
 
-static int32_t FlashRead(uint32_t addr, uint8_t* addrDst, int32_t size)
+int32_t FlashRead(uint32_t addr, uint8_t* addrDst, int32_t size)
 {
     SpiSSEnable();
     SpiWriteReadByte(FLASH_CMD_FASTREAD);
@@ -142,25 +139,24 @@ static int32_t FlashSelfCheck()
 }
 
 static int32_t FlashWrite(uint8_t* data, uint32_t size, int32_t sectorOffset){
-    MyPrintf("Start writing data to flash\n");
+    UsartSetMystdioHandler(USART2);
+    MyPrintf("Start writing data to flash.\n");
     FlashUnlock();
     int32_t sectorNum = size / EXTERN_FLASH_SECTOR_SIZE;
     for(int32_t i = 0; i < sectorNum; ++i){
         uint32_t sectorStartAddr = (sectorOffset + i) * EXTERN_FLASH_SECTOR_SIZE;
         FlashSectorErase(sectorStartAddr);
         for(int32_t j = 0; j < EXTERN_FLASH_SECTOR_SIZE / EXTERN_FLASH_PAGE_SIZE; ++j){
-            FlashWritePage(sectorStartAddr + j * EXTERN_FLASH_PAGE_SIZE, data + j * EXTERN_FLASH_PAGE_SIZE, EXTERN_FLASH_PAGE_SIZE);
+            FlashWritePage(
+                sectorStartAddr + j * EXTERN_FLASH_PAGE_SIZE, 
+                data + i * EXTERN_FLASH_SECTOR_SIZE + j * EXTERN_FLASH_PAGE_SIZE, 
+                EXTERN_FLASH_PAGE_SIZE
+            );
         }
-        MyPrintf("Sector %d, starts from addr %05X, has been written\n", sectorOffset + i, sectorStartAddr);
+        UsartSetMystdioHandler(USART2);
+        MyPrintf("Sector %d, starts from addr %05X, has been written.\n", sectorOffset + i, sectorStartAddr);
     }
-
     FlashLock();
-
-    uint8_t flashStatus;
-    SpiSSEnable();
-    SpiWriteReadByte(FLASH_CMD_READREG2);
-    flashStatus = SpiWriteReadByte(0xff);
-    SpiSSDisable();
 
     //Verify
     uint8_t dataBuffer[EXTERN_FLASH_SECTOR_SIZE];
@@ -169,12 +165,14 @@ static int32_t FlashWrite(uint8_t* data, uint32_t size, int32_t sectorOffset){
         FlashRead(sectorStartAddr, dataBuffer, EXTERN_FLASH_SECTOR_SIZE);
         for(int32_t j = 0; j < EXTERN_FLASH_SECTOR_SIZE; ++j){
             if(dataBuffer[j] != data[j + i * EXTERN_FLASH_SECTOR_SIZE]){
-                MyPrintf("Sector %d, starts from addr %05X, verification fail\n", sectorOffset + i, sectorStartAddr);
+                UsartSetMystdioHandler(USART2);
+                MyPrintf("Sector %d, starts from addr %05X, verification fail.\n", sectorOffset + i, sectorStartAddr);
                 return 1;
             }
         }
+        MyPrintf("Sector %d, starts from addr %05X, verification success.\n", sectorOffset + i, sectorStartAddr);
     }
-
+    UsartSetMystdioHandler(USART2);
     MyPrintf("All sectors verified!\n");
     return 0;
 }
@@ -202,14 +200,13 @@ int32_t ExternFlashInit()
     //if not, init spi2
     if(!LL_SPI_IsEnabled(SPI2)) SpiInit();
     if(FlashSelfCheck()) {
-        SetMystdioTarget(USART2);
-        MyPrintf("External Flash self check fail!\n");
+        UsartSetMystdioHandler(USART2);
+        MyPrintf("External flash self check fail!\n");
         return 1;
     }
     else {
-        SetMystdioTarget(USART2);
-        MyPrintf("External Flash self check pass!\n");
-        //FlashWrite((uint8_t*)data, sizeof(data), 1);
+        UsartSetMystdioHandler(USART2);
+        MyPrintf("External flash self check pass!\n");
         return 0;
     }
 }

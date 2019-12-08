@@ -24,8 +24,8 @@ int32_t DacInit(){
 
     
 
-    SetMystdioTarget(USART2);
-    MyPrintf("DAC init success!\n");
+    UsartSetMystdioHandler(USART2);
+    MyPrintf("DAC initialization succeed!\n");
 }
 
 #endif

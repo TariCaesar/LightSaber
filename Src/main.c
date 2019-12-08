@@ -4,23 +4,34 @@ void ProcessBluetoothData(char data);
 
 int main()
 {
-    SysInit();
+    //Init SysClk
+    SysClkInit();
+    //Set priorityGroup to 2 for all the system
+    NVIC_SetPriorityGrouping(2);
+    //Init SysDelay
+    SysDelayInit();
+    //Init peripheral
+    UsartInit();
+    //MpuInit();
+    AudioInit();
 
-    uint8_t data;
     while(1) {
-        SetMystdioTarget(USART2);
+        /*
+        uint8_t data;
+        UsartSetMystdioHandler(USART2);
         if(!MystdinBufferIsEmpty()){
             data = MyGetchar();
-            SetMystdioTarget(USART1);
+            UsartSetMystdioHandler(USART1);
             MyPutchar(data);
         }
-        SetMystdioTarget(USART1);
+        UsartSetMystdioHandler(USART1);
         if(!MystdinBufferIsEmpty()){
             data = MyGetchar();
-            SetMystdioTarget(USART2);
+            UsartSetMystdioHandler(USART2);
             MyPutchar(data);
             ProcessBluetoothData(data);
         }
+        */
     }
     return 0;
 }

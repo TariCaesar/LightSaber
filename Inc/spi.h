@@ -6,6 +6,7 @@
 #include "stm32f1xx_ll_gpio.h"
 #include "stm32f1xx_ll_spi.h"
 #include "mystdio.h"
+#include "usart.h"
 
 __STATIC_INLINE void SpiSSEnable()
 {

@@ -14,8 +14,5 @@
 #define USART_TX_DMA_THRESHOLD 4
 
 int32_t UsartInit();
-int32_t UsartRxBufferIsEmpty(USART_TypeDef* usartTarget);
-int32_t UsartTxBufferIsFull(USART_TypeDef* usartTarget);
-uint32_t UsartReceiveData(uint8_t* addr_dst, uint32_t size, USART_TypeDef* usartTarget);
-uint32_t UsartSendData(uint8_t* addr_src, uint32_t size, USART_TypeDef* usartTarget);
+int32_t UsartSetMystdioHandler(USART_TypeDef* usartTarget);
 #endif

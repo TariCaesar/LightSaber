@@ -5,6 +5,7 @@
 
 #include "stm32f1xx.h"
 #include "mystdio.h"
+#include "usart.h"
 #include "extern_flash.h"
 #include "dac.h"
 

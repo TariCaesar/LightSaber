@@ -7,10 +7,12 @@
 #include "stm32f1xx_ll_gpio.h"
 #include "stm32f1xx_ll_dac.h"
 #include "mystdio.h"
+#include "usart.h"
 
 #define AUDIO_MAX 128
 
 int32_t DacInit();
 
 #endif
+
 #endif

@@ -1,9 +1,8 @@
 #ifndef MYSTDIO_H
 #define MYSTDIO_H
 
-#include "usart.h"
-
-int32_t SetMystdioTarget(USART_TypeDef* usartTarget);
+int32_t SetMystdioTransimitHandler(uint32_t (*handler)(uint8_t*, uint32_t));
+int32_t SetMystdioReceiveHandler(uint32_t (*handler)(uint8_t*, uint32_t));
 
 int32_t MyPrintf(const char*, ...);
 int32_t MyScanf(const char*, ...);
