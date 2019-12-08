@@ -1,12 +1,5 @@
 #include "i2c.h"
 
-static struct{
-    uint8_t deviceAddr;
-    uint8_t* addr;
-    uint32_t size;
-    int32_t direction;
-}i2cFastRequest;
-
 static I2C_TASK i2cTask;
 
 static struct{
@@ -71,7 +64,7 @@ uint8_t I2cWriteByte(uint8_t deviceAddr, uint8_t data){
     LL_I2C_TransmitData8(I2C2, data);
 
     //wait until the last transfer complete
-    while(!LL_I2C_IsActiveFlag_TXE(I2C2) || !LL_I2C_IsActiveFlag_BTF(I2C2))continue;
+    while(!LL_I2C_IsActiveFlag_BTF(I2C2))continue;
 
     LL_I2C_GenerateStopCondition(I2C2);
     //Wait until bus release
@@ -98,7 +91,7 @@ uint16_t I2cWriteHalfWord(uint8_t deviceAddr, uint16_t data){
     LL_I2C_TransmitData8(I2C2, (uint8_t)(data & 0xff));
 
     //wait until the last transfer complete
-    while(!LL_I2C_IsActiveFlag_TXE(I2C2) || !LL_I2C_IsActiveFlag_BTF(I2C2))continue;
+    while(!LL_I2C_IsActiveFlag_BTF(I2C2))continue;
 
     LL_I2C_GenerateStopCondition(I2C2);
     //Wait until bus release
@@ -131,33 +124,36 @@ uint8_t I2cReadByte(uint8_t deviceAddr){
 }
 
 int32_t I2cReadByteIT(uint8_t deviceAddr, uint8_t* addrDst){
-    if(LL_I2C_IsActiveFlag_BUSY(I2C2))return 1;
+    if(i2cTaskWrap.active == 0 && LL_I2C_IsActiveFlag_BUSY(I2C2))return 1;
     i2cTask.deviceAddr = deviceAddr;
     i2cTask.addr = addrDst;
     i2cTask.direction = I2C_REQUEST_READ;
 
     LL_I2C_EnableIT_EVT(I2C2);
     LL_I2C_EnableIT_BUF(I2C2);
-    LL_I2C_GenerateStartCondition(I2C2);
+    //if warp is active, start condition generate in interrupt except for the first transfer
+    if(i2cTaskWrap.active == 0 || i2cTaskWrap.taskCnt == 0)
+        LL_I2C_GenerateStartCondition(I2C2);
     return 0;
 }
 
 int32_t I2cWriteByteIT(uint8_t deviceAddr, uint8_t* addrSrc){
-    if(LL_I2C_IsActiveFlag_BUSY(I2C2))return 1;
+    if(i2cTaskWrap.active == 0 && LL_I2C_IsActiveFlag_BUSY(I2C2))return 1;
     i2cTask.deviceAddr = deviceAddr;
     i2cTask.addr = addrSrc;
     i2cTask.direction = I2C_REQUEST_WRITE;
 
     LL_I2C_EnableIT_EVT(I2C2);
     LL_I2C_EnableIT_BUF(I2C2);
-    LL_I2C_GenerateStartCondition(I2C2);
+    //if warp is active, start condition generate in interrupt except for the first transfer
+    if(i2cTaskWrap.active == 0 || i2cTaskWrap.taskCnt == 0)
+        LL_I2C_GenerateStartCondition(I2C2);
     return 0;
 }
 
 int32_t I2cTransferWrap(I2C_TASK* task, uint32_t taskNum){
     if(LL_I2C_IsActiveFlag_BUSY(I2C2))return 1;
     //disable i2c last dma for continous i2c transfer
-    if(taskNum > 1)LL_I2C_AcknowledgeNextData(I2C2, LL_I2C_ACK);
     i2cTaskWrap.task = task;
     i2cTaskWrap.taskNum = taskNum;
     i2cTaskWrap.taskCnt = 0;
@@ -174,41 +170,35 @@ int32_t I2cTransferWrap(I2C_TASK* task, uint32_t taskNum){
 void I2C2_EV_IRQHandler(){
     if(LL_I2C_IsActiveFlag_SB(I2C2)){
         if(i2cTask.direction == I2C_REQUEST_WRITE){
-            LL_I2C_TransmitData8(I2C2, (i2cFastRequest.deviceAddr << 1) & I2C_REQUEST_WRITE);
+            LL_I2C_TransmitData8(I2C2, (i2cTask.deviceAddr << 1) & I2C_REQUEST_WRITE);
         }
         else{
-            LL_I2C_TransmitData8(I2C2, (i2cFastRequest.deviceAddr << 1) | I2C_REQUEST_READ);
+            LL_I2C_TransmitData8(I2C2, (i2cTask.deviceAddr << 1) | I2C_REQUEST_READ);
         }
     }
     else if(LL_I2C_IsActiveFlag_ADDR(I2C2)){
         LL_I2C_ClearFlag_ADDR(I2C2);
-        if(i2cTaskWrap.active){
-            if(i2cTaskWrap.taskCnt + 1 == i2cTaskWrap.taskNum){
-                LL_I2C_AcknowledgeNextData(I2C2, LL_I2C_NACK);
-            }
-            else{
-                LL_I2C_AcknowledgeNextData(I2C2, LL_I2C_ACK);
-            }
-            if(i2cTask.direction == I2C_REQUEST_WRITE)LL_I2C_TransmitData8(I2C2, *(i2cTask.addr));
+        if(i2cTask.direction == I2C_REQUEST_WRITE){
+            LL_I2C_TransmitData8(I2C2, *(i2cTask.addr));
         }
         else{
             LL_I2C_AcknowledgeNextData(I2C2, LL_I2C_NACK);
-            if(i2cTask.direction == I2C_REQUEST_WRITE){
-                LL_I2C_TransmitData8(I2C2, *(i2cTask.addr));
+            if(i2cTaskWrap.active == 0 || i2cTaskWrap.taskCnt + 1 == i2cTaskWrap.taskNum){
+                LL_I2C_GenerateStopCondition(I2C2);
             }
             else{
-                LL_I2C_GenerateStopCondition(I2C2);
+                LL_I2C_GenerateStartCondition(I2C2);
             }
         }
     }
     else if(LL_I2C_IsActiveFlag_RXNE(I2C2)){
         *(i2cTask.addr) = LL_I2C_ReceiveData8(I2C2);
+        LL_I2C_DisableIT_EVT(I2C2);
+        LL_I2C_DisableIT_BUF(I2C2);
         if(i2cTaskWrap.active){
             i2cTaskWrap.taskCnt += 1;
             if(i2cTaskWrap.taskCnt == i2cTaskWrap.taskNum){
                 i2cTaskWrap.active = 0;
-                LL_I2C_DisableIT_EVT(I2C2);
-                LL_I2C_DisableIT_BUF(I2C2);
             }
             else{
                 if(i2cTaskWrap.task[i2cTaskWrap.taskCnt].direction == I2C_REQUEST_WRITE){
@@ -218,20 +208,18 @@ void I2C2_EV_IRQHandler(){
                     I2cReadByteIT(i2cTaskWrap.task[i2cTaskWrap.taskCnt].deviceAddr, i2cTaskWrap.task[i2cTaskWrap.taskCnt].addr);
                 }
             }
-        }
-        else{
-            LL_I2C_DisableIT_EVT(I2C2);
-            LL_I2C_DisableIT_BUF(I2C2);
         }
     }
-    else if(LL_I2C_IsActiveFlag_TXE(I2C2)){
+    else if(LL_I2C_IsActiveFlag_BTF(I2C2) && LL_I2C_IsActiveFlag_TXE(I2C2)){
+        if(i2cTaskWrap.active == 0 || i2cTaskWrap.taskCnt + 1 == i2cTaskWrap.taskNum)
+            LL_I2C_GenerateStopCondition(I2C2);
+        else LL_I2C_GenerateStartCondition(I2C2);
+        LL_I2C_DisableIT_EVT(I2C2);
+        LL_I2C_DisableIT_BUF(I2C2);
         if(i2cTaskWrap.active){
             i2cTaskWrap.taskCnt += 1;
             if(i2cTaskWrap.taskCnt == i2cTaskWrap.taskNum){
                 i2cTaskWrap.active = 0;
-                LL_I2C_GenerateStopCondition(I2C2);
-                LL_I2C_DisableIT_EVT(I2C2);
-                LL_I2C_DisableIT_BUF(I2C2);
             }
             else{
                 if(i2cTaskWrap.task[i2cTaskWrap.taskCnt].direction == I2C_REQUEST_WRITE){
@@ -242,11 +230,6 @@ void I2C2_EV_IRQHandler(){
                 }
             }
         }
-        else{
-            LL_I2C_GenerateStopCondition(I2C2);
-            LL_I2C_DisableIT_EVT(I2C2);
-            LL_I2C_DisableIT_BUF(I2C2);
-        } 
     }
     return;
 }

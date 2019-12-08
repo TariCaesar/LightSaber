@@ -8,11 +8,10 @@ int main()
     SysClkInit();
     //Set priorityGroup to 2 for all the system
     NVIC_SetPriorityGrouping(2);
-    //Init SysDelay
-    SysDelayInit();
+
     //Init peripheral
     UsartInit();
-    //MpuInit();
+    MpuInit();
     AudioInit();
 
     while(1) {

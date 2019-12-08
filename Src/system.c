@@ -2,6 +2,19 @@
 
 static int32_t SysDelayCnt = 0;
 
+int32_t SysDelayInit(){
+    //config systick to 1ms period
+    LL_RCC_ClocksTypeDef SysClk;
+    LL_RCC_GetSystemClocksFreq(&SysClk);
+    SysTick->LOAD = SysClk.SYSCLK_Frequency / 1000;
+    SysTick->VAL = 0;
+    SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_TICKINT_Msk;
+    NVIC_SetPriority(SysTick_IRQn, NVIC_EncodePriority(2, 0, 0));
+    NVIC_EnableIRQ(SysTick_IRQn);
+
+    return 0;
+}
+
 int32_t SysClkInit(){
     //Clock init
     LL_UTILS_PLLInitTypeDef pllInit;
@@ -16,19 +29,8 @@ int32_t SysClkInit(){
     clkInit.APB2CLKDivider = LL_RCC_APB2_DIV_1;
     LL_PLL_ConfigSystemClock_HSI(&pllInit, &clkInit);
     //LL_PLL_ConfigSystemClock_HSE(8000000u, LL_UTILS_HSEBYPASS_OFF, &pllInit, &clkInit);
-    return 0;
-}
 
-int32_t SysDelayInit(){
-    //config systick to 1ms period
-    LL_RCC_ClocksTypeDef SysClk;
-    LL_RCC_GetSystemClocksFreq(&SysClk);
-    SysTick->LOAD = SysClk.SYSCLK_Frequency / 1000;
-    SysTick->VAL = 0;
-    SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_TICKINT_Msk;
-    NVIC_SetPriority(SysTick_IRQn, NVIC_EncodePriority(2, 0, 0));
-    NVIC_EnableIRQ(SysTick_IRQn);
-
+    SysDelayInit();
     return 0;
 }
 
@@ -42,7 +44,7 @@ int32_t SysDelayMs(uint32_t tick){
 }
 
 void SysTick_Handler(){
-    --SysDelayCnt;
+    SysDelayCnt -= 1;
     return;
 }
 

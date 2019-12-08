@@ -8,5 +8,4 @@
 
 int32_t SysClkInit();
 int32_t SysDelayMs(uint32_t tick);
-int32_t SysDelayInit();
 #endif
