@@ -40,8 +40,7 @@ int32_t SpiInit()
     LL_SPI_StructInit(&spi2Init);
     spi2Init.Mode = LL_SPI_MODE_MASTER;
     spi2Init.DataWidth = LL_SPI_DATAWIDTH_8BIT;
-    //Set prescale=2, means spi2 clock=18MHz
-    spi2Init.BaudRate = LL_SPI_BAUDRATEPRESCALER_DIV2;
+    spi2Init.BaudRate = LL_SPI_BAUDRATEPRESCALER_DIV4;
     spi2Init.BitOrder = LL_SPI_MSB_FIRST;
     spi2Init.ClockPhase = LL_SPI_PHASE_2EDGE;
     spi2Init.ClockPolarity = LL_SPI_POLARITY_HIGH;
@@ -55,7 +54,7 @@ int32_t SpiInit()
 
     spiTask.active = 0;
 
-    //don't enable spi as we'll do it mannually
+    LL_SPI_Enable(SPI2);
     UsartSetMystdioHandler(USART2);
     MyPrintf("SPI initialization succeed!\n");
     return 0;
@@ -73,13 +72,13 @@ uint8_t SpiWriteReadByte(uint8_t dataWrite)
 
 int32_t SpiWriteReadByteIT(uint8_t dataTx, uint8_t* addrDst, void (*handler)(void)){
     //enable spi interrupt 
-    LL_SPI_EnableIT_TXE(SPI2);
-    LL_SPI_EnableIT_RXNE(SPI2);
     spiTask.dataTx = dataTx;
     spiTask.addrDst = addrDst;
     spiTask.handler = handler;
     spiTask.active = 1;
-    SpiEnable();
+    SpiSSEnable();
+    LL_SPI_EnableIT_RXNE(SPI2);
+    LL_SPI_EnableIT_TXE(SPI2);
     return 0;
 }
 
@@ -91,7 +90,7 @@ void SPI2_IRQHandler(){
             else *(spiTask.addrDst) = LL_SPI_ReceiveData8(SPI2);
             LL_SPI_DisableIT_RXNE(SPI2);
             spiTask.active = 0;
-            if(spiTask.handler == 0)SpiDisable();
+            if(spiTask.handler == 0)SpiSSDisable();
             else spiTask.handler();
             return;
         }

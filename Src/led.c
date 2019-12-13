@@ -13,4 +13,6 @@ int32_t LedInit(){
     ledGpioInit.Pull = LL_GPIO_PULL_UP;
     ledGpioInit.Speed = LL_GPIO_SPEED_FREQ_HIGH;
     LL_GPIO_Init(GPIOC, &ledGpioInit);
+    
+    
 }
