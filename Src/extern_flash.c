@@ -1,12 +1,19 @@
 #include "extern_flash.h"
 
+static struct{
+    uint32_t addr;
+    uint8_t* addrDst;
+    uint32_t size;
+    uint32_t cnt;
+}flashFastReadTask;
+
 static int32_t FlashIsBusy()
 {
     uint8_t flashStatus;
-    SpiSSEnable();
+    SpiEnable();
     SpiWriteReadByte(FLASH_CMD_READREG1);
     flashStatus = SpiWriteReadByte(0xff);
-    SpiSSDisable();
+    SpiDisable();
 
     return (flashStatus & 0x1);
 }
@@ -14,23 +21,23 @@ static int32_t FlashIsBusy()
 static int32_t FlashUnlock()
 {
     //Write Enable
-    SpiSSEnable();
+    SpiEnable();
     SpiWriteReadByte(FLASH_CMD_WRITEENABLE);
-    SpiSSDisable();
+    SpiDisable();
 
     //Write 0x00 to Status Reg 1 and Status Reg 2
     //Thus all page all writable
-    SpiSSEnable();
+    SpiEnable();
     SpiWriteReadByte(FLASH_CMD_WRITEREG1);
     SpiWriteReadByte(0x60);
     SpiWriteReadByte(0x00);
-    SpiSSDisable();
+    SpiDisable();
     while(FlashIsBusy())continue;
 
-    SpiSSEnable();
+    SpiEnable();
     SpiWriteReadByte(FLASH_CMD_WRITEREG3);
     SpiWriteReadByte(0x60);
-    SpiSSDisable();
+    SpiDisable();
     while(FlashIsBusy())continue;
 
     return 0;
@@ -39,21 +46,21 @@ static int32_t FlashUnlock()
 static int32_t FlashLock()
 {
     //Write Enable
-    SpiSSEnable();
+    SpiEnable();
     SpiWriteReadByte(FLASH_CMD_WRITEENABLE);
-    SpiSSDisable();
+    SpiDisable();
 
-    SpiSSEnable();
+    SpiEnable();
     SpiWriteReadByte(FLASH_CMD_WRITEREG1);
     SpiWriteReadByte(0x60);
     SpiWriteReadByte(0x40);
-    SpiSSDisable();
+    SpiDisable();
     while(FlashIsBusy())continue;
 
-    SpiSSEnable();
+    SpiEnable();
     SpiWriteReadByte(FLASH_CMD_WRITEREG3);
     SpiWriteReadByte(0x60);
-    SpiSSDisable();
+    SpiDisable();
     while(FlashIsBusy())continue;
 
     return 0;
@@ -65,37 +72,20 @@ static int32_t FlashSectorErase(uint32_t addr)
     if(addr & 0xfff) return 1;
 
     //Write Enable
-    SpiSSEnable();
+    SpiEnable();
     SpiWriteReadByte(FLASH_CMD_WRITEENABLE);
-    SpiSSDisable();
+    SpiDisable();
 
     //erase
-    SpiSSEnable();
+    SpiEnable();
     SpiWriteReadByte(FLASH_CMD_SECTORERASE);
     SpiWriteReadByte((uint8_t)(addr >> 16));
     SpiWriteReadByte((uint8_t)(addr >> 8));
     SpiWriteReadByte((uint8_t)addr);
-    SpiSSDisable();
+    SpiDisable();
 
     //wait util erase complete
     while(FlashIsBusy())continue;
-    return 0;
-}
-
-int32_t FlashRead(uint32_t addr, uint8_t* addrDst, int32_t size)
-{
-    SpiSSEnable();
-    SpiWriteReadByte(FLASH_CMD_FASTREAD);
-    SpiWriteReadByte((uint8_t)(addr >> 16));
-    SpiWriteReadByte((uint8_t)(addr >> 8));
-    SpiWriteReadByte((uint8_t)addr);
-    //dummy frame
-    SpiWriteReadByte(0xff);
-    for(int32_t i = 0; i < size; ++i){
-        addrDst[i] = SpiWriteReadByte(0xff);
-    }
-    SpiSSDisable();
-
     return 0;
 }
 
@@ -105,11 +95,11 @@ static int32_t FlashWritePage(uint32_t addr, uint8_t* addrSrc, uint32_t size)
     if(size > 256) return 1;
 
     //Write Enable
-    SpiSSEnable();
+    SpiEnable();
     SpiWriteReadByte(FLASH_CMD_WRITEENABLE);
-    SpiSSDisable();
+    SpiDisable();
 
-    SpiSSEnable();
+    SpiEnable();
     SpiWriteReadByte(FLASH_CMD_WRITEPAGE);
     SpiWriteReadByte((uint8_t)(addr >> 16));
     SpiWriteReadByte((uint8_t)(addr >> 8));
@@ -118,7 +108,7 @@ static int32_t FlashWritePage(uint32_t addr, uint8_t* addrSrc, uint32_t size)
     for(i = 0; i < size; i++) {
         SpiWriteReadByte(addrSrc[i]);
     }
-    SpiSSDisable();
+    SpiDisable();
 
     //wait util write complete
     while(FlashIsBusy())continue;
@@ -194,11 +184,61 @@ static int32_t FlashConfig()
     return 0;
 }
 
+static void FlashFastReadHandler(){
+    flashFastReadTask.cnt += 1;
+    if(flashFastReadTask.cnt == 1){
+        SpiWriteReadByteIT((uint8_t)(flashFastReadTask.addr >> 16), 0, FlashFastReadHandler);
+    }
+    else if(flashFastReadTask.cnt == 2){
+        SpiWriteReadByteIT((uint8_t)(flashFastReadTask.addr >> 8), 0, FlashFastReadHandler);
+    }
+    else if(flashFastReadTask.cnt == 3){
+        SpiWriteReadByteIT((uint8_t)(flashFastReadTask.addr), 0, FlashFastReadHandler);
+    }
+    else if(flashFastReadTask.cnt == 4){ 
+        //dummy byte
+        SpiWriteReadByteIT(0xff, 0, FlashFastReadHandler);
+    }
+    else if(flashFastReadTask.cnt > 4 && flashFastReadTask.cnt < (flashFastReadTask.size + 4)){
+        SpiWriteReadByteIT(0xff, flashFastReadTask.addrDst, FlashFastReadHandler);
+        flashFastReadTask.addrDst += 1;
+    }
+    else{
+        SpiWriteReadByteIT(0xff, flashFastReadTask.addrDst, 0);
+    }
+    return;
+}
+
+uint32_t FlashRead(uint32_t addr, uint8_t* addrDst, uint32_t size)
+{
+    SpiEnable();
+    SpiWriteReadByte(FLASH_CMD_FASTREAD);
+    SpiWriteReadByte((uint8_t)(addr >> 16));
+    SpiWriteReadByte((uint8_t)(addr >> 8));
+    SpiWriteReadByte((uint8_t)addr);
+    //dummy frame
+    SpiWriteReadByte(0xff);
+    for(int32_t i = 0; i < size; ++i){
+        addrDst[i] = SpiWriteReadByte(0xff);
+    }
+    SpiDisable();
+
+    return size;
+}
+
+int32_t FlashFastRead(uint32_t addr, uint8_t* addrDst, uint32_t size){
+    if(LL_SPI_IsActiveFlag_BSY(SPI2))return 1;
+    flashFastReadTask.addr = addr;
+    flashFastReadTask.addrDst = addrDst;
+    flashFastReadTask.size = size;
+    flashFastReadTask.cnt = 0;
+    SpiWriteReadByteIT(FLASH_CMD_FASTREAD, 0, FlashFastReadHandler);
+    return 0;
+}
+
 int32_t ExternFlashInit()
 {
-    //check if SPI2 is enable
-    //if not, init spi2
-    if(!LL_SPI_IsEnabled(SPI2)) SpiInit();
+    SpiInit();
     if(FlashSelfCheck()) {
         UsartSetMystdioHandler(USART2);
         MyPrintf("External flash self check fail!\n");
@@ -210,3 +250,4 @@ int32_t ExternFlashInit()
         return 0;
     }
 }
+

@@ -29,6 +29,7 @@ int32_t I2cInit(){
     //enable i2c2 clock
     LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_I2C2);
 
+    LL_I2C_DeInit(I2C2);
     LL_I2C_InitTypeDef i2c2Init;
     LL_I2C_StructInit(&i2c2Init);
     i2c2Init.ClockSpeed = 200000u;

@@ -15,6 +15,7 @@ int main()
     AudioInit();
 
     while(1) {
+        if(!AudioPlay(AUDIO_NAME_HUM))MyPrintf("Start play");
         /*
         uint8_t data;
         UsartSetMystdioHandler(USART2);

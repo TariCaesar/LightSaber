@@ -1,5 +1,12 @@
 #include "spi.h"
 
+static struct{
+    uint8_t dataTx;
+    uint8_t* addrDst;
+    void (*handler)(void);
+    int32_t active;
+}spiTask;
+
 int32_t SpiInit()
 {
     //check the GPIOB clock status
@@ -28,6 +35,7 @@ int32_t SpiInit()
 
     LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_SPI2);
 
+    LL_SPI_DeInit(SPI2);
     LL_SPI_InitTypeDef spi2Init;
     LL_SPI_StructInit(&spi2Init);
     spi2Init.Mode = LL_SPI_MODE_MASTER;
@@ -40,23 +48,57 @@ int32_t SpiInit()
     spi2Init.TransferDirection = LL_SPI_FULL_DUPLEX;
     spi2Init.NSS = LL_SPI_NSS_SOFT;
     LL_SPI_Init(SPI2, &spi2Init);
+ 
+    //Config SPI interrupt priority for DMA
+    NVIC_SetPriority(SPI2_IRQn, NVIC_EncodePriority(2, 2, 2));
+    NVIC_EnableIRQ(SPI2_IRQn);
 
-    LL_SPI_EnableIT_TXE(SPI2);
-    LL_SPI_EnableIT_RXNE(SPI2);
+    spiTask.active = 0;
 
-    //Enable SPI2
-    LL_SPI_Enable(SPI2);
-
+    //don't enable spi as we'll do it mannually
     UsartSetMystdioHandler(USART2);
     MyPrintf("SPI initialization succeed!\n");
     return 0;
 }
 
-//Must enable CS signal before use this function and disable CS after a frame transfermation complete
 uint8_t SpiWriteReadByte(uint8_t dataWrite)
 {
+    if(LL_SPI_IsActiveFlag_BSY(SPI2))return 0;
     while(!LL_SPI_IsActiveFlag_TXE(SPI2))continue;
     LL_SPI_TransmitData8(SPI2, dataWrite);
     while(!LL_SPI_IsActiveFlag_RXNE(SPI2))continue;
-    return LL_SPI_ReceiveData8(SPI2);
+    uint8_t data = LL_SPI_ReceiveData8(SPI2);
+    return data;
+}
+
+int32_t SpiWriteReadByteIT(uint8_t dataTx, uint8_t* addrDst, void (*handler)(void)){
+    //enable spi interrupt 
+    LL_SPI_EnableIT_TXE(SPI2);
+    LL_SPI_EnableIT_RXNE(SPI2);
+    spiTask.dataTx = dataTx;
+    spiTask.addrDst = addrDst;
+    spiTask.handler = handler;
+    spiTask.active = 1;
+    SpiEnable();
+    return 0;
+}
+
+void SPI2_IRQHandler(){
+    if(!spiTask.active)return;
+    else{
+        if(LL_SPI_IsActiveFlag_RXNE(SPI2)){
+            if(spiTask.addrDst == 0)LL_SPI_ReceiveData8(SPI2);
+            else *(spiTask.addrDst) = LL_SPI_ReceiveData8(SPI2);
+            LL_SPI_DisableIT_RXNE(SPI2);
+            spiTask.active = 0;
+            if(spiTask.handler == 0)SpiDisable();
+            else spiTask.handler();
+            return;
+        }
+        else if(LL_SPI_IsActiveFlag_TXE(SPI2)){
+            LL_SPI_TransmitData8(SPI2, spiTask.dataTx);
+            LL_SPI_DisableIT_TXE(SPI2);
+            return;
+        }
+    }
 }

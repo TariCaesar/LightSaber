@@ -23,6 +23,7 @@
 #define FLASH_CMD_WRITEPAGE 0x02
 
 int32_t ExternFlashInit();
-int32_t FlashRead(uint32_t addr, uint8_t* addrDst, int32_t size);
+uint32_t FlashRead(uint32_t addr, uint8_t* addrDst, uint32_t size);
+int32_t FlashFastRead(uint32_t addr, uint8_t* addrDst, uint32_t size);
 
 #endif

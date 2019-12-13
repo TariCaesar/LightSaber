@@ -39,6 +39,7 @@ static I2C_TASK mpuDataUpdateTaskWrap[] = {
 
 void MpuDataUpdate(){
     I2cTransferWrap(mpuDataUpdateTaskWrap, 12);
+    /*
     mpuDataUpdateCnt += 1;
     if(mpuDataUpdateCnt == 100){
         mpuDataUpdateCnt = 0;
@@ -50,6 +51,7 @@ void MpuDataUpdate(){
             gyroData[2]
         );
     }
+    */
     return;
 }
 
@@ -95,7 +97,8 @@ int32_t MpuInit()
 
 int32_t EnableMpuDataUpdate(){
     //Init tim2 for update
-    Timer2Init(MpuDataUpdate);
+    Timer2Init(MpuDataUpdate, 100);
+    Timer2Enable();
     MyPrintf("Start mpu data update.\n");
     return 0;
 }

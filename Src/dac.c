@@ -1,5 +1,23 @@
-#ifdef STM32F103xE
 #include "dac.h"
+
+static int16_t* audioData;
+static uint32_t audioDataNum = 0;
+static uint32_t audioDataCnt = 0;
+static void (*audioPlayEndHandler)(void) = 0;
+
+void DacUpdateHandler(){
+    if(audioDataCnt < audioDataNum){
+        //scale to 0 ~ DAC_MAX
+        int16_t data = audioData[audioDataCnt] / 32;
+        LL_DAC_ConvertDualData12RightAligned(DAC1, data, DAC_MAX >> 1);
+        audioDataCnt += 1;
+    }
+    else{
+        Timer3Disable();
+        audioPlayEndHandler();
+    }
+    return;
+}
 
 int32_t DacInit(){
     if(!LL_APB2_GRP1_IsEnabledClock(LL_APB2_GRP1_PERIPH_GPIOA))
@@ -12,6 +30,7 @@ int32_t DacInit(){
     dacGpioInit.Speed = LL_GPIO_SPEED_FREQ_HIGH;
     LL_GPIO_Init(GPIOA, &dacGpioInit);
     
+    LL_DAC_DeInit(DAC1);
     LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_DAC1);
     LL_DAC_InitTypeDef dacInit;
     LL_DAC_StructInit(&dacInit);
@@ -23,9 +42,19 @@ int32_t DacInit(){
     LL_DAC_Init(DAC1, LL_DAC_CHANNEL_2, &dacInit);
 
     
+    Timer3Init(DacUpdateHandler, 44100);
 
     UsartSetMystdioHandler(USART2);
     MyPrintf("DAC initialization succeed!\n");
+    return 0;
 }
 
-#endif
+uint32_t DacAudioPlay(int16_t* data, uint32_t size, void (*handler)(void)){
+    audioDataNum = size;
+    audioDataCnt = 0;
+    audioData = data;
+    audioPlayEndHandler = handler;
+    Timer3Enable();
+    return size;
+}
+

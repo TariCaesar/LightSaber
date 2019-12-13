@@ -45,6 +45,8 @@ int32_t UsartInit()
     LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_USART1);
     LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_USART2);
 
+    LL_USART_DeInit(USART1);
+    LL_USART_DeInit(USART2);
     //init usart
     LL_USART_InitTypeDef usartInit;
     //Set usart1 baudrate to 115200
