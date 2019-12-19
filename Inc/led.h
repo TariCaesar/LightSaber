@@ -16,9 +16,10 @@ typedef struct{
     uint8_t B;
 }LED_COLOR;
 
-LED_COLOR ledColorData[LED_NUM];
+extern LED_COLOR ledColorData[LED_NUM];
 
 int32_t LedInit();
 
+int32_t LedUpdate();
 
 #endif

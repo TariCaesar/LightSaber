@@ -13,9 +13,23 @@ int main()
     UsartInit();
     MpuInit();
     AudioInit();
+    LedInit();
 
+    for(int32_t i = 0; i < LED_NUM; ++i){
+        ledColorData[i].G = 255;
+        ledColorData[i].B = 0;
+        ledColorData[i].R = 0;
+    }
+    uint8_t tmp[2];
+    FlashFastRead(0, tmp, 2);
+    while(LL_SPI_IsActiveFlag_BSY(SPI2));
     while(1) {
-        if(!AudioPlay(AUDIO_NAME_HUM))MyPrintf("Start play");
+        continue;
+        //if(!AudioPlay(AUDIO_NAME_OPEN)){
+        //    UsartSetMystdioHandler(USART2);
+        //    MyPrintf("Start play\n");
+        //}
+        
         /*
         uint8_t data;
         UsartSetMystdioHandler(USART2);

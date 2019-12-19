@@ -5,6 +5,7 @@
 #include "stm32f1xx_ll_bus.h"
 #include "stm32f1xx_ll_gpio.h"
 #include "stm32f1xx_ll_spi.h"
+#include "stm32f1xx_ll_dma.h"
 #include "mystdio.h"
 #include "usart.h"
 
@@ -25,8 +26,5 @@ int32_t SpiInit();
 uint8_t SpiWriteReadByte(uint8_t dataWrite);
 
 //for useless data use NULL or 0 as input parameter
-//don't enable spi, it will do it inside
-//but need disable spi in handler if you want to end this transfer frame
-//or use 0 as handler, as it will automatically end this transfer frame if handler equal to 1
-int32_t SpiWriteReadByteIT(uint8_t dataTx, uint8_t* addrDst, void (*handler)(void));
+uint32_t SpiWriteReadDMA(uint8_t* addrSrc, uint8_t* addrDst, uint32_t size);
 #endif

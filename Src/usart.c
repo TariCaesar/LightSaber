@@ -10,7 +10,6 @@ typedef struct {
     uint8_t data[USART_TX_BUFFER_SIZE];
     uint32_t head;
     uint32_t tail;
-    uint32_t tailNext;
 } UsartTxBuffer;
 
 static UsartRxBuffer usart1RxBuffer;
@@ -47,19 +46,14 @@ int32_t UsartInit()
 
     LL_USART_DeInit(USART1);
     LL_USART_DeInit(USART2);
-    //init usart
+
     LL_USART_InitTypeDef usartInit;
-    //Set usart1 baudrate to 115200
     usartInit.BaudRate = 115200u;
-    //Set usart1 frame format 8b data, 1b stop, no parity
     usartInit.DataWidth = LL_USART_DATAWIDTH_8B;
     usartInit.StopBits = LL_USART_STOPBITS_1;
     usartInit.Parity = LL_USART_PARITY_NONE;
-    //only enable RX as we'll enable TX later
-    usartInit.TransferDirection = LL_USART_DIRECTION_RX;
-    //Disable hardware flow control
+    usartInit.TransferDirection = LL_USART_DIRECTION_TX_RX;
     usartInit.HardwareFlowControl = LL_USART_HWCONTROL_NONE;
-    //Set oversampling to 16
     usartInit.OverSampling = LL_USART_OVERSAMPLING_16;
     LL_USART_Init(USART1, &usartInit);
     LL_USART_Init(USART2, &usartInit);
@@ -68,22 +62,17 @@ int32_t UsartInit()
     LL_USART_ConfigAsyncMode(USART1);
     LL_USART_ConfigAsyncMode(USART2);
 
-    //Enable dma clock
-    if(!LL_AHB1_GRP1_IsEnabledClock(LL_AHB1_GRP1_PERIPH_DMA1)) {
-        LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA1);
-    }
-
     //Init usart rx buffer
     usart1RxBuffer.head = 0;
+    usart1RxBuffer.tail = 0;
     usart2RxBuffer.head = 0;
+    usart2RxBuffer.tail = 0;
 
     //Init usart tx buffer
     usart1TxBuffer.head = 0;
     usart1TxBuffer.tail = 0;
-    usart1TxBuffer.tailNext = 0;
     usart2TxBuffer.head = 0;
     usart2TxBuffer.tail = 0;
-    usart2TxBuffer.tailNext = 0;
 
     //Init interrupt
     LL_USART_ClearFlag_RXNE(USART1);
@@ -108,61 +97,6 @@ int32_t UsartInit()
 
     UsartSetMystdioHandler(USART2);
     MyPrintf("USART initialization succeed!\n");
-    return 0;
-}
-
-static int32_t UsartTransmitTrigger(USART_TypeDef* usartTarget)
-{
-    //if buffer remain less than USART_TX_DMA_THRESHOLD, use single transimit
-    //otherwise, use dma
-    uint32_t txTransmitRemain;
-    UsartTxBuffer* txBuffer;
-
-    if(usartTarget == USART1)
-        txBuffer = &usart1TxBuffer;
-    else if(usartTarget == USART2)
-        txBuffer = &usart2TxBuffer;
-    else
-        return 1;
-
-    txTransmitRemain =
-        (txBuffer->head < txBuffer->tail) ? (txBuffer->head + USART_TX_BUFFER_SIZE - txBuffer->tail) : (txBuffer->head - txBuffer->tail);
-
-    if(txTransmitRemain == 0) return 2;
-    if(txTransmitRemain < USART_TX_DMA_THRESHOLD) {
-        txBuffer->tailNext = (txBuffer->tail + 1) % USART_TX_BUFFER_SIZE;
-        LL_USART_TransmitData8(usartTarget, txBuffer->data[txBuffer->tail]);
-    }
-    else {
-        //Configre DMA
-        LL_USART_EnableDMAReq_TX(usartTarget);
-        LL_DMA_InitTypeDef usartTxDmaInit;
-        usartTxDmaInit.Direction = LL_DMA_DIRECTION_MEMORY_TO_PERIPH;
-        usartTxDmaInit.PeriphOrM2MSrcAddress = (uint32_t)(&(usartTarget->DR));
-        usartTxDmaInit.MemoryOrM2MDstAddress = (uint32_t)(txBuffer->data + txBuffer->tail);
-        usartTxDmaInit.PeriphOrM2MSrcDataSize = LL_DMA_PDATAALIGN_BYTE;
-        usartTxDmaInit.MemoryOrM2MDstDataSize = LL_DMA_MDATAALIGN_BYTE;
-        usartTxDmaInit.PeriphOrM2MSrcIncMode = LL_DMA_PERIPH_NOINCREMENT;
-        usartTxDmaInit.MemoryOrM2MDstIncMode = LL_DMA_MEMORY_INCREMENT;
-        usartTxDmaInit.Mode = LL_DMA_MODE_NORMAL;
-        usartTxDmaInit.Priority = LL_DMA_PRIORITY_MEDIUM;
-        if(txBuffer->head < txBuffer->tail) {
-            usartTxDmaInit.NbData = USART_TX_BUFFER_SIZE - txBuffer->tail;
-            txBuffer->tailNext = 0;
-        }
-        else {
-            usartTxDmaInit.NbData = txBuffer->head - txBuffer->tail;
-            txBuffer->tailNext = txBuffer->head;
-        }
-        uint32_t usartDmaChannel = (usartTarget == USART1) ? LL_DMA_CHANNEL_4 : LL_DMA_CHANNEL_7;
-        LL_DMA_Init(DMA1, usartDmaChannel, &usartTxDmaInit);
-        //Enable Channl for DMA1
-        LL_DMA_EnableChannel(DMA1, usartDmaChannel);
-    }
-    //Clear USART1 TXE Interrupt flag
-    LL_USART_ClearFlag_TC(usartTarget);
-    //Enable USART1 Tx
-    LL_USART_EnableDirectionTx(usartTarget);
     return 0;
 }
 
@@ -208,9 +142,11 @@ static uint32_t UsartTransmitData(uint8_t* addrSrc, uint32_t size, USART_TypeDef
         txBuffer->data[txBuffer->head] = addrSrc[i];
         txBuffer->head = (txBuffer->head + 1) % USART_TX_BUFFER_SIZE;
     }
-    //check if Usart Tx is enable
-    //if so, it means dma is running
-    if(!(LL_USART_GetTransferDirection(usartTarget) & LL_USART_DIRECTION_TX))UsartTransmitTrigger(usartTarget);
+
+    if(txBuffer->tail != txBuffer->head) {
+        LL_USART_TransmitData8(usartTarget, txBuffer->data[txBuffer->tail]);
+        txBuffer->tail = (txBuffer->tail + 1) % USART_TX_BUFFER_SIZE;
+    }
     return size;
 }
 
@@ -248,15 +184,9 @@ void USART1_IRQHandler()
 {
     if(LL_USART_IsActiveFlag_TC(USART1)) {
         LL_USART_ClearFlag_TC(USART1);
-        LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_4);
-        usart1TxBuffer.tail = usart1TxBuffer.tailNext;
-        if(usart1TxBuffer.tail == usart1TxBuffer.head) {
-            //Transmit complete
-            LL_USART_DisableDMAReq_TX(USART1);
-            LL_USART_DisableDirectionTx(USART1);
-        }
-        else {
-            UsartTransmitTrigger(USART1);
+        if(usart1TxBuffer.tail != usart1TxBuffer.head) {
+            LL_USART_TransmitData8(USART1, usart1TxBuffer.data[usart1TxBuffer.tail]);
+            usart1TxBuffer.tail = (usart1TxBuffer.tail + 1) % USART_TX_BUFFER_SIZE;
         }
     }
     else if(LL_USART_IsActiveFlag_RXNE(USART1)) {
@@ -275,15 +205,9 @@ void USART2_IRQHandler()
 {
     if(LL_USART_IsActiveFlag_TC(USART2)) {
         LL_USART_ClearFlag_TC(USART2);
-        LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_7);
-        usart2TxBuffer.tail = usart2TxBuffer.tailNext;
-        if(usart2TxBuffer.tail == usart2TxBuffer.head) {
-            //Transmit complete
-            LL_USART_DisableDMAReq_TX(USART2);
-            LL_USART_DisableDirectionTx(USART2);
-        }
-        else {
-            UsartTransmitTrigger(USART2);
+        if(usart2TxBuffer.tail != usart2TxBuffer.head) {
+            LL_USART_TransmitData8(USART2, usart2TxBuffer.data[usart2TxBuffer.tail]);
+            usart2TxBuffer.tail = (usart2TxBuffer.tail + 1) % USART_TX_BUFFER_SIZE;
         }
     }
     else if(LL_USART_IsActiveFlag_RXNE(USART2)) {

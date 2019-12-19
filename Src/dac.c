@@ -5,16 +5,25 @@ static uint32_t audioDataNum = 0;
 static uint32_t audioDataCnt = 0;
 static void (*audioPlayEndHandler)(void) = 0;
 
+int32_t IRQcnt = 0;
+
 void DacUpdateHandler(){
     if(audioDataCnt < audioDataNum){
-        //scale to 0 ~ DAC_MAX
-        int16_t data = audioData[audioDataCnt] / 32;
-        LL_DAC_ConvertDualData12RightAligned(DAC1, data, DAC_MAX >> 1);
+        int32_t dataOffset = ((int32_t)(audioData[audioDataCnt])) / 32  + 2048;
+
+        LL_DAC_ConvertData12RightAligned(DAC1, LL_DAC_CHANNEL_1, (uint16_t)dataOffset);
         audioDataCnt += 1;
+        IRQcnt += 1;
     }
     else{
         Timer3Disable();
-        audioPlayEndHandler();
+        if(audioPlayEndHandler == 0){
+            LL_DAC_Disable(DAC1, LL_DAC_CHANNEL_1);
+            LL_DAC_Disable(DAC1, LL_DAC_CHANNEL_2);
+        }
+        else{
+            audioPlayEndHandler();
+        }
     }
     return;
 }
@@ -40,7 +49,6 @@ int32_t DacInit(){
 
     LL_DAC_Init(DAC1, LL_DAC_CHANNEL_1, &dacInit);
     LL_DAC_Init(DAC1, LL_DAC_CHANNEL_2, &dacInit);
-
     
     Timer3Init(DacUpdateHandler, 44100);
 
@@ -54,6 +62,9 @@ uint32_t DacAudioPlay(int16_t* data, uint32_t size, void (*handler)(void)){
     audioDataCnt = 0;
     audioData = data;
     audioPlayEndHandler = handler;
+    LL_DAC_Enable(DAC1, LL_DAC_CHANNEL_1);
+    LL_DAC_Enable(DAC1, LL_DAC_CHANNEL_2);
+    LL_DAC_ConvertData12RightAligned(DAC1, LL_DAC_CHANNEL_2, 2048);
     Timer3Enable();
     return size;
 }

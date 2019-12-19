@@ -1,11 +1,7 @@
 #include "spi.h"
 
-static struct{
-    uint8_t dataTx;
-    uint8_t* addrDst;
-    void (*handler)(void);
-    int32_t active;
-}spiTask;
+static uint8_t spiDmaTxDummy = 0xff;
+static uint8_t spiDmaRxDummy = 0xff;
 
 int32_t SpiInit()
 {
@@ -48,11 +44,23 @@ int32_t SpiInit()
     spi2Init.NSS = LL_SPI_NSS_SOFT;
     LL_SPI_Init(SPI2, &spi2Init);
  
-    //Config SPI interrupt priority for DMA
-    NVIC_SetPriority(SPI2_IRQn, NVIC_EncodePriority(2, 2, 2));
-    NVIC_EnableIRQ(SPI2_IRQn);
+    LL_SPI_EnableDMAReq_TX(SPI2);
+    LL_SPI_EnableDMAReq_RX(SPI2);
 
-    spiTask.active = 0;
+    //dma init
+    //enable dma clock
+    if(!LL_APB2_GRP1_IsEnabledClock(LL_AHB1_GRP1_PERIPH_DMA1)) {
+        LL_APB2_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA1);
+    }
+    LL_DMA_ClearFlag_TC4(DMA1);
+    LL_DMA_EnableIT_TC(DMA1, LL_DMA_CHANNEL_4);
+    NVIC_SetPriority(DMA1_Channel4_IRQn, NVIC_EncodePriority(2, 3, 3));
+    NVIC_EnableIRQ(DMA1_Channel4_IRQn);
+    LL_DMA_ClearFlag_TC5(DMA1);
+    LL_DMA_EnableIT_TC(DMA1, LL_DMA_CHANNEL_5);
+    NVIC_SetPriority(DMA1_Channel5_IRQn, NVIC_EncodePriority(2, 3, 3));
+    NVIC_EnableIRQ(DMA1_Channel5_IRQn);
+
 
     LL_SPI_Enable(SPI2);
     UsartSetMystdioHandler(USART2);
@@ -70,34 +78,106 @@ uint8_t SpiWriteReadByte(uint8_t dataWrite)
     return data;
 }
 
-int32_t SpiWriteReadByteIT(uint8_t dataTx, uint8_t* addrDst, void (*handler)(void)){
-    //enable spi interrupt 
-    spiTask.dataTx = dataTx;
-    spiTask.addrDst = addrDst;
-    spiTask.handler = handler;
-    spiTask.active = 1;
+uint32_t SpiWriteReadDMA(uint8_t* addrSrc, uint8_t* addrDst, uint32_t size){
+    LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_5, size);
+    if(addrSrc){
+        LL_DMA_ConfigTransfer(
+            DMA1, 
+            LL_DMA_CHANNEL_5,
+            LL_DMA_DIRECTION_MEMORY_TO_PERIPH |
+            LL_DMA_PRIORITY_MEDIUM |
+            LL_DMA_MODE_NORMAL |
+            LL_DMA_PERIPH_NOINCREMENT |
+            LL_DMA_MEMORY_INCREMENT |
+            LL_DMA_PDATAALIGN_BYTE |
+            LL_DMA_MDATAALIGN_BYTE
+        );
+        LL_DMA_ConfigAddresses(
+            DMA1,
+            LL_DMA_CHANNEL_5,
+            (uint32_t)addrSrc,
+            LL_SPI_DMA_GetRegAddr(SPI2),
+            LL_DMA_GetDataTransferDirection(DMA1, LL_DMA_CHANNEL_5)
+        );
+    }
+    else{
+        LL_DMA_ConfigTransfer(
+            DMA1, 
+            LL_DMA_CHANNEL_5,
+            LL_DMA_DIRECTION_MEMORY_TO_PERIPH |
+            LL_DMA_PRIORITY_MEDIUM |
+            LL_DMA_MODE_NORMAL |
+            LL_DMA_PERIPH_NOINCREMENT |
+            LL_DMA_MEMORY_NOINCREMENT |
+            LL_DMA_PDATAALIGN_BYTE |
+            LL_DMA_MDATAALIGN_BYTE
+        );
+        LL_DMA_ConfigAddresses(
+            DMA1,
+            LL_DMA_CHANNEL_5,
+            (uint32_t)&spiDmaTxDummy,
+            LL_SPI_DMA_GetRegAddr(SPI2),
+            LL_DMA_GetDataTransferDirection(DMA1, LL_DMA_CHANNEL_5)
+        );
+    }
+
+    LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_4, size);
+    if(addrDst){
+        LL_DMA_ConfigTransfer(
+            DMA1, 
+            LL_DMA_CHANNEL_4,
+            LL_DMA_DIRECTION_PERIPH_TO_MEMORY|
+            LL_DMA_PRIORITY_MEDIUM |
+            LL_DMA_MODE_NORMAL |
+            LL_DMA_PERIPH_NOINCREMENT |
+            LL_DMA_MEMORY_INCREMENT |
+            LL_DMA_PDATAALIGN_BYTE |
+            LL_DMA_MDATAALIGN_BYTE
+        );
+        LL_DMA_ConfigAddresses(
+            DMA1,
+            LL_DMA_CHANNEL_4,
+            LL_SPI_DMA_GetRegAddr(SPI2),
+            (uint32_t)addrDst,
+            LL_DMA_GetDataTransferDirection(DMA1, LL_DMA_CHANNEL_4)
+        );
+    }
+    else{
+        LL_DMA_ConfigTransfer(
+            DMA1, 
+            LL_DMA_CHANNEL_4,
+            LL_DMA_DIRECTION_PERIPH_TO_MEMORY|
+            LL_DMA_PRIORITY_MEDIUM |
+            LL_DMA_MODE_NORMAL |
+            LL_DMA_PERIPH_NOINCREMENT |
+            LL_DMA_MEMORY_NOINCREMENT |
+            LL_DMA_PDATAALIGN_BYTE |
+            LL_DMA_MDATAALIGN_BYTE
+        );
+        LL_DMA_ConfigAddresses(
+            DMA1,
+            LL_DMA_CHANNEL_4,
+            LL_SPI_DMA_GetRegAddr(SPI2),
+            (uint32_t)&spiDmaRxDummy,
+            LL_DMA_GetDataTransferDirection(DMA1, LL_DMA_CHANNEL_4)
+        );
+    }
+
     SpiSSEnable();
-    LL_SPI_EnableIT_RXNE(SPI2);
-    LL_SPI_EnableIT_TXE(SPI2);
-    return 0;
+    LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_5);
+    LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_4);
+    return size;
 }
 
-void SPI2_IRQHandler(){
-    if(!spiTask.active)return;
-    else{
-        if(LL_SPI_IsActiveFlag_RXNE(SPI2)){
-            if(spiTask.addrDst == 0)LL_SPI_ReceiveData8(SPI2);
-            else *(spiTask.addrDst) = LL_SPI_ReceiveData8(SPI2);
-            LL_SPI_DisableIT_RXNE(SPI2);
-            spiTask.active = 0;
-            if(spiTask.handler == 0)SpiSSDisable();
-            else spiTask.handler();
-            return;
-        }
-        else if(LL_SPI_IsActiveFlag_TXE(SPI2)){
-            LL_SPI_TransmitData8(SPI2, spiTask.dataTx);
-            LL_SPI_DisableIT_TXE(SPI2);
-            return;
-        }
-    }
+void DMA1_Channel4_IRQHandler(){
+    LL_DMA_ClearFlag_TC4(DMA1);
+    LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_4);
+    SpiSSDisable();
+    return;
+}
+
+void DMA1_Channel5_IRQHandler(){
+    LL_DMA_ClearFlag_TC5(DMA1);
+    LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_5);
+    return;
 }

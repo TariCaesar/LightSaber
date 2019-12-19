@@ -227,12 +227,13 @@ uint32_t FlashRead(uint32_t addr, uint8_t* addrDst, uint32_t size)
 }
 
 int32_t FlashFastRead(uint32_t addr, uint8_t* addrDst, uint32_t size){
-    if(LL_SPI_IsActiveFlag_BSY(SPI2))return 1;
-    flashFastReadTask.addr = addr;
-    flashFastReadTask.addrDst = addrDst;
-    flashFastReadTask.size = size;
-    flashFastReadTask.cnt = 0;
-    SpiWriteReadByteIT(FLASH_CMD_FASTREAD, 0, FlashFastReadHandler);
+    SpiWriteReadByte(FLASH_CMD_FASTREAD);
+    SpiWriteReadByte((uint8_t)(addr >> 16));
+    SpiWriteReadByte((uint8_t)(addr >> 8));
+    SpiWriteReadByte((uint8_t)addr);
+    //dummy frame
+    SpiWriteReadByte(0xff);
+    SpiWriteReadDMA(0, addrDst, size);
     return 0;
 }
 
