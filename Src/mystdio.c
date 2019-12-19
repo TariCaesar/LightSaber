@@ -57,12 +57,12 @@ int32_t MyScanf(const char *__format, ...)
 uint8_t MyGetchar()
 {
     uint8_t ch;
-    while(mystdioReceiveHandler(&ch, 1) == 0) continue;
-    return ch;
+    if(mystdioReceiveHandler(&ch, 1) == 0)return 0;
+    else return ch;
 }
 
 uint8_t MyPutchar(uint8_t ch)
 {
-    while(mystdioTransmitHandler(&ch, 1) == 0) continue;
-    return ch;
+    if(mystdioTransmitHandler(&ch, 1) == 0)return 0;
+    else return ch;
 }

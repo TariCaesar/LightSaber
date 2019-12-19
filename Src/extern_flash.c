@@ -184,31 +184,6 @@ static int32_t FlashConfig()
     return 0;
 }
 
-static void FlashFastReadHandler(){
-    flashFastReadTask.cnt += 1;
-    if(flashFastReadTask.cnt == 1){
-        SpiWriteReadByteIT((uint8_t)(flashFastReadTask.addr >> 16), 0, FlashFastReadHandler);
-    }
-    else if(flashFastReadTask.cnt == 2){
-        SpiWriteReadByteIT((uint8_t)(flashFastReadTask.addr >> 8), 0, FlashFastReadHandler);
-    }
-    else if(flashFastReadTask.cnt == 3){
-        SpiWriteReadByteIT((uint8_t)(flashFastReadTask.addr), 0, FlashFastReadHandler);
-    }
-    else if(flashFastReadTask.cnt == 4){ 
-        //dummy byte
-        SpiWriteReadByteIT(0xff, 0, FlashFastReadHandler);
-    }
-    else if(flashFastReadTask.cnt > 4 && flashFastReadTask.cnt < (flashFastReadTask.size + 4)){
-        SpiWriteReadByteIT(0xff, flashFastReadTask.addrDst, FlashFastReadHandler);
-        flashFastReadTask.addrDst += 1;
-    }
-    else{
-        SpiWriteReadByteIT(0xff, flashFastReadTask.addrDst, 0);
-    }
-    return;
-}
-
 uint32_t FlashRead(uint32_t addr, uint8_t* addrDst, uint32_t size)
 {
     SpiSSEnable();
@@ -227,13 +202,14 @@ uint32_t FlashRead(uint32_t addr, uint8_t* addrDst, uint32_t size)
 }
 
 int32_t FlashFastRead(uint32_t addr, uint8_t* addrDst, uint32_t size){
+    SpiSSEnable();
     SpiWriteReadByte(FLASH_CMD_FASTREAD);
     SpiWriteReadByte((uint8_t)(addr >> 16));
     SpiWriteReadByte((uint8_t)(addr >> 8));
     SpiWriteReadByte((uint8_t)addr);
     //dummy frame
     SpiWriteReadByte(0xff);
-    SpiWriteReadDMA(0, addrDst, size);
+    SpiWriteReadDMA(0, addrDst, size, 0);
     return 0;
 }
 

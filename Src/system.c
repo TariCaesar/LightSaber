@@ -26,6 +26,10 @@ int32_t SysClkInit(){
     NVIC_SetPriority(SysTick_IRQn, NVIC_EncodePriority(2, 0, 0));
     NVIC_EnableIRQ(SysTick_IRQn);
 
+    //disable jtag but enable swd
+    if(!LL_APB2_GRP1_IsEnabledClock(LL_APB2_GRP1_PERIPH_AFIO))
+        LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_AFIO);
+    LL_GPIO_AF_Remap_SWJ_NOJTAG();
     return 0;
 }
 

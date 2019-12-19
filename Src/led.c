@@ -186,34 +186,6 @@ static inline LedWriteLow(){
     __NOP();
 }
 
-void LedUpdateHandler(){
-    if(ledColorPhase){
-        LL_GPIO_WriteOutputPort(GPIOC, LL_GPIO_ReadOutputPort(GPIOC) | (0x1));
-        if(ledColorState){
-            Timer4Enable(highThTick);
-        }
-        else{
-            Timer4Enable(lowThTick);
-        }
-    }
-    else{
-        LL_GPIO_WriteOutputPort(GPIOC, LL_GPIO_ReadOutputPort(GPIOC) & ~(0x1));
-        if(ledColorState){
-            Timer4Enable(highTlTick);
-        }
-        else{
-            Timer4Enable(lowTlTick);
-        }
-        //fetch next
-        ledColorUpdateCnt += 1;
-        ledColorState = ledColorDataUnroll[ledColorUpdateCnt];
-    }
-    ledColorPhase = !ledColorPhase;
-    if(ledColorUpdateCnt == LED_NUM * 24)
-        Timer4Disable();
-    return;
-}
-
 int32_t LedUpdate(){
     for(int32_t i = 0; i < LED_NUM; ++i){
         for(int32_t j = 0; j < LED_NUM; ++j){
@@ -248,26 +220,21 @@ int32_t LedUpdate(){
 }
 
 int32_t LedInit(){
-    if(!LL_APB2_GRP1_IsEnabledClock(LL_APB2_GRP1_PERIPH_GPIOC)){
-        LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOC);
+    //use dma for led transfer, configure PB15(SPI2 MOSI) into af output
+    if(!LL_APB2_GRP1_IsEnabledClock(LL_APB2_GRP1_PERIPH_GPIOB)){
+        LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOB);
     }
     
     LL_GPIO_InitTypeDef ledGpioInit;
     LL_GPIO_StructInit(&ledGpioInit);
-    ledGpioInit.Mode = LL_GPIO_MODE_OUTPUT;
-    ledGpioInit.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-    ledGpioInit.Pin = LL_GPIO_PIN_0;
-    ledGpioInit.Pull = LL_GPIO_PULL_DOWN;
+    ledGpioInit.Pin = LL_GPIO_PIN_15;
+    ledGpioInit.Mode = LL_GPIO_MODE_ALTERNATE;
+    ledGpioInit.OutputType = LL_GPIO_OUTPUT_OPENDRAIN;
+    ledGpioInit.Pull = LL_GPIO_PULL_UP;
     ledGpioInit.Speed = LL_GPIO_SPEED_FREQ_HIGH;
-    LL_GPIO_Init(GPIOC, &ledGpioInit);
+    LL_GPIO_Init(GPIOB, &ledGpioInit);
 
-    LL_RCC_ClocksTypeDef SysClk;
-    LL_RCC_GetSystemClocksFreq(&SysClk);
-    uint32_t timerClk = (LL_RCC_GetAPB1Prescaler() == LL_RCC_APB1_DIV_1)? SysClk.PCLK1_Frequency: SysClk.PCLK1_Frequency * 2;
-    lowThTick = highTlTick = timerClk / 4000000;
-    highThTick = lowTlTick = timerClk / 1000000;
-
-    Timer4Init(LedUpdateHandler);
+    
     MyPrintf("LED init succeed!\n");
     return 0;
 }

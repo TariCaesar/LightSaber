@@ -39,7 +39,6 @@ static I2C_TASK mpuDataUpdateTaskWrap[] = {
 
 void MpuDataUpdate(){
     I2cTransferWrap(mpuDataUpdateTaskWrap, 12);
-    /*
     mpuDataUpdateCnt += 1;
     if(mpuDataUpdateCnt == 100){
         mpuDataUpdateCnt = 0;
@@ -51,16 +50,12 @@ void MpuDataUpdate(){
             gyroData[2]
         );
     }
-    */
     return;
 }
 
 int32_t MpuInit()
 {
-    //check if I2C2 is enable
-    //if not, init I2C2
-    if(!LL_I2C_IsEnabled(I2C2))
-        I2cInit();
+    I2cInit();
 
     //init mpu6050
     //wake and reset mpu6050

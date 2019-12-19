@@ -15,16 +15,12 @@ int main()
     AudioInit();
     LedInit();
 
-    for(int32_t i = 0; i < LED_NUM; ++i){
-        ledColorData[i].G = 255;
-        ledColorData[i].B = 0;
-        ledColorData[i].R = 0;
-    }
-    uint8_t tmp[2];
-    FlashFastRead(0, tmp, 2);
-    while(LL_SPI_IsActiveFlag_BSY(SPI2));
+    //for(int32_t i = 0; i < LED_NUM; ++i){
+    //    ledColorData[i].G = 255;
+    //    ledColorData[i].B = 0;
+    //    ledColorData[i].R = 0;
+    //}
     while(1) {
-        continue;
         //if(!AudioPlay(AUDIO_NAME_OPEN)){
         //    UsartSetMystdioHandler(USART2);
         //    MyPrintf("Start play\n");
@@ -33,17 +29,17 @@ int main()
         /*
         uint8_t data;
         UsartSetMystdioHandler(USART2);
-        if(!MystdinBufferIsEmpty()){
-            data = MyGetchar();
+        data = MyGetchar();
+        if(data){
             UsartSetMystdioHandler(USART1);
             MyPutchar(data);
         }
         UsartSetMystdioHandler(USART1);
-        if(!MystdinBufferIsEmpty()){
-            data = MyGetchar();
+        data = MyGetchar();
+        if(data){
             UsartSetMystdioHandler(USART2);
             MyPutchar(data);
-            ProcessBluetoothData(data);
+            //ProcessBluetoothData(data);
         }
         */
     }

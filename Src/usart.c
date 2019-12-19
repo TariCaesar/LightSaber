@@ -86,9 +86,9 @@ int32_t UsartInit()
     LL_USART_EnableIT_TC(USART2);
 
     //Enable USART in NVIC
-    NVIC_SetPriority(USART1_IRQn, NVIC_EncodePriority(2, 2, 1));
+    NVIC_SetPriority(USART1_IRQn, NVIC_EncodePriority(2, 2, 0));
     NVIC_EnableIRQ(USART1_IRQn);
-    NVIC_SetPriority(USART2_IRQn, NVIC_EncodePriority(2, 2, 1));
+    NVIC_SetPriority(USART2_IRQn, NVIC_EncodePriority(2, 2, 0));
     NVIC_EnableIRQ(USART2_IRQn);
 
     //Enable Usart

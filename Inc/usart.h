@@ -8,9 +8,8 @@
 #include "mystdio.h"
 
 //due to our full judgement alogrithm, buffer size is 1 less than them
-#define USART_RX_BUFFER_SIZE 128
-#define USART_TX_BUFFER_SIZE 128
-#define USART_TX_DMA_THRESHOLD 4
+#define USART_RX_BUFFER_SIZE 256
+#define USART_TX_BUFFER_SIZE 256
 
 int32_t UsartInit();
 int32_t UsartSetMystdioHandler(USART_TypeDef* usartTarget);
