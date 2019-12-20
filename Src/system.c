@@ -5,17 +5,17 @@ static int32_t SysDelayCnt = 0;
 int32_t SysClkInit(){
     //Clock init
     LL_UTILS_PLLInitTypeDef pllInit;
-    pllInit.PLLMul = LL_RCC_PLL_MUL_9;
+    pllInit.PLLMul = LL_RCC_PLL_MUL_6;
     pllInit.Prediv = LL_RCC_PREDIV_DIV_1;
     LL_UTILS_ClkInitTypeDef clkInit;
-    //Set AHB the same as pll clk, 72MHz
+    //Set AHB the same as pll clk, 48MHz
     clkInit.AHBCLKDivider = LL_RCC_SYSCLK_DIV_1;
-    //Set APB1 half of the AHB clk, 36MHz
+    //Set APB1 half of the AHB clk, 24MHz
     clkInit.APB1CLKDivider = LL_RCC_APB1_DIV_2;
-    //Set APB2 the same as pll clk, 72MHz
+    //Set APB2 the same as pll clk, 48MHz
     clkInit.APB2CLKDivider = LL_RCC_APB2_DIV_1;
-    LL_PLL_ConfigSystemClock_HSI(&pllInit, &clkInit);
-    //LL_PLL_ConfigSystemClock_HSE(8000000u, LL_UTILS_HSEBYPASS_OFF, &pllInit, &clkInit);
+    //LL_PLL_ConfigSystemClock_HSI(&pllInit, &clkInit);
+    LL_PLL_ConfigSystemClock_HSE(8000000u, LL_UTILS_HSEBYPASS_OFF, &pllInit, &clkInit);
 
     //config systick to 1ms period
     LL_RCC_ClocksTypeDef SysClk;

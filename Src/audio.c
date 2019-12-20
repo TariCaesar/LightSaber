@@ -15,16 +15,16 @@ static int16_t audioBufferAddrReadNext = 0;
 // 1 means playing and 0 means not
 static int32_t audioPlayState = 0;
 
-static void audioPlayEndHandler(){
+static void audioCallbackHandler(){
     if(audioBufferReadCnt < audioBufferReadNum){
-        DacAudioPlay((int16_t*)(audioBuffer[audioBufferPingOrPong]), EXTERN_FLASH_SECTOR_SIZE / 2, audioPlayEndHandler);
+        DacAudioPlay((int16_t*)(audioBuffer[audioBufferPingOrPong]), EXTERN_FLASH_SECTOR_SIZE / 2, audioCallbackHandler);
         audioBufferPingOrPong = (audioBufferPingOrPong)? 0: 1;
         audioBufferAddrReadNext += EXTERN_FLASH_SECTOR_SIZE;
         FlashFastRead(audioBufferAddrReadNext, (uint8_t*)(audioBuffer[audioBufferPingOrPong]), EXTERN_FLASH_SECTOR_SIZE);
         audioBufferReadCnt += 1;
     }
     else if(audioBufferReadCnt == audioBufferReadNum){
-        DacAudioPlay((int16_t*)(audioBuffer[audioBufferPingOrPong]), EXTERN_FLASH_SECTOR_SIZE / 2, audioPlayEndHandler);
+        DacAudioPlay((int16_t*)(audioBuffer[audioBufferPingOrPong]), EXTERN_FLASH_SECTOR_SIZE / 2, audioCallbackHandler);
         audioBufferReadCnt += 1;
     }
     else{
@@ -68,7 +68,7 @@ int32_t AudioPlay(AUDIO_NAME audioName){
     FlashFastRead(audioBufferAddrReadNext, (uint8_t*)(audioBuffer[audioBufferPingOrPong]), EXTERN_FLASH_SECTOR_SIZE);
     audioBufferReadCnt += 1;
 
-    DacAudioPlay((int16_t*)(audioHeadBuffer[audioName]), EXTERN_FLASH_SECTOR_SIZE / 2, audioPlayEndHandler);
+    DacAudioPlay((int16_t*)(audioHeadBuffer[audioName]), EXTERN_FLASH_SECTOR_SIZE / sizeof(int16_t), audioCallbackHandler);
     audioPlayState = 1;
     return 0;
 }

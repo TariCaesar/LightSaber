@@ -10,5 +10,6 @@
 #include "mpu6050.h"
 #include "audio.h"
 #include "led.h"
+#include "power_manage.h"
 
 #endif

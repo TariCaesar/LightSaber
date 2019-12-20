@@ -12,19 +12,19 @@ int main()
     //Init peripheral
     UsartInit();
     MpuInit();
-    AudioInit();
     LedInit();
+    AudioInit();
+    PowerManageInit();
+    
+    DeviceEnable();
 
-    //for(int32_t i = 0; i < LED_NUM; ++i){
-    //    ledColorData[i].G = 255;
-    //    ledColorData[i].B = 0;
-    //    ledColorData[i].R = 0;
-    //}
     while(1) {
-        //if(!AudioPlay(AUDIO_NAME_OPEN)){
-        //    UsartSetMystdioHandler(USART2);
-        //    MyPrintf("Start play\n");
-        //}
+        /*
+        if(!AudioPlay(AUDIO_NAME_OPEN)){
+            UsartSetMystdioHandler(USART2);
+            MyPrintf("Start play\n");
+        }
+        */
         
         /*
         uint8_t data;

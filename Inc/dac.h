@@ -9,12 +9,11 @@
 #include "usart.h"
 #include "timer.h"
 
-extern int32_t IRQcnt;
 int32_t DacInit();
 
 //this function put data into dac output reg in 44100Hz frequency
 //provide a handler to handle process after play finish
-uint32_t DacAudioPlay(int16_t* data, uint32_t size, void(*endHandler)(void));
+uint32_t DacAudioPlay(int16_t* data, uint32_t size, void(*callbackHandler)(void));
 
 
 #endif

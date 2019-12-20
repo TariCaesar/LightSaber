@@ -5,7 +5,7 @@
 #include "stm32f1xx_ll_rcc.h"
 #include "stm32f1xx_ll_bus.h"
 #include "stm32f1xx_ll_tim.h"
-
+#include "stm32f1xx_ll_dma.h"
 
 //Init tim2 for mpu cyclic read
 int32_t Timer2Init(void (*intHandler)(void), uint32_t frequency);

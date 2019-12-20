@@ -6,6 +6,7 @@ static void (*timer3IntHandler)(void) = 0;
 int32_t Timer2Init(void (*intHandler)(void), uint32_t frequency){
     LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM2);
     LL_TIM_DeInit(TIM2);
+    LL_TIM_SetClockSource(TIM2, LL_TIM_CLOCKSOURCE_INTERNAL);
     LL_TIM_InitTypeDef timer2Init;
     LL_TIM_StructInit(&timer2Init);
     //config tim2 clk frequency to APB1_CLK / 10000;
@@ -43,6 +44,7 @@ void TIM2_IRQHandler(){
 int32_t Timer3Init(void (*intHandler)(void), uint32_t frequency){
     LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM3);
     LL_TIM_DeInit(TIM3);
+    LL_TIM_SetClockSource(TIM3, LL_TIM_CLOCKSOURCE_INTERNAL);
     LL_TIM_InitTypeDef timer3Init;
     LL_TIM_StructInit(&timer3Init);
     //config tim3 clk frequency to APB1_CLK;

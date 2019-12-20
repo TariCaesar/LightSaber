@@ -32,7 +32,7 @@ int32_t I2cInit(){
     LL_I2C_DeInit(I2C2);
     LL_I2C_InitTypeDef i2c2Init;
     LL_I2C_StructInit(&i2c2Init);
-    i2c2Init.ClockSpeed = 10000u;
+    i2c2Init.ClockSpeed = 200000u;
     i2c2Init.PeripheralMode = LL_I2C_MODE_I2C;
     i2c2Init.OwnAddress1 = 0x52;
     i2c2Init.OwnAddrSize = LL_I2C_OWNADDRESS1_7BIT;

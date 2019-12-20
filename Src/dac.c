@@ -3,26 +3,21 @@
 static int16_t* audioData;
 static uint32_t audioDataNum = 0;
 static uint32_t audioDataCnt = 0;
-static void (*dacPlayEndHandler)(void) = 0;
-
-int32_t IRQcnt = 0;
+static void (*dacCallbackHandler)(void) = 0;
 
 void DacUpdateHandler(){
     if(audioDataCnt < audioDataNum){
-        int32_t dataOffset = ((int32_t)(audioData[audioDataCnt])) / 32  + 2048;
-
-        LL_DAC_ConvertData12RightAligned(DAC1, LL_DAC_CHANNEL_1, (uint16_t)dataOffset);
+        int32_t dataOffset = ((int32_t)(audioData[audioDataCnt]) + INT16_MAX);
+        LL_DAC_ConvertData12LeftAligned(DAC1, LL_DAC_CHANNEL_1, (uint16_t)dataOffset);
         audioDataCnt += 1;
-        IRQcnt += 1;
     }
     else{
         Timer3Disable();
-        if(dacPlayEndHandler == 0){
+        if(dacCallbackHandler == 0){
             LL_DAC_Disable(DAC1, LL_DAC_CHANNEL_1);
-            LL_DAC_Disable(DAC1, LL_DAC_CHANNEL_2);
         }
         else{
-            dacPlayEndHandler();
+            dacCallbackHandler();
         }
     }
     return;
@@ -35,7 +30,7 @@ int32_t DacInit(){
     LL_GPIO_StructInit(&dacGpioInit);
     dacGpioInit.Mode = LL_GPIO_MODE_ANALOG;
     dacGpioInit.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-    dacGpioInit.Pin = LL_GPIO_PIN_4 | LL_GPIO_PIN_5;
+    dacGpioInit.Pin = LL_GPIO_PIN_4;
     dacGpioInit.Speed = LL_GPIO_SPEED_FREQ_HIGH;
     LL_GPIO_Init(GPIOA, &dacGpioInit);
     
@@ -48,7 +43,6 @@ int32_t DacInit(){
     dacInit.WaveAutoGeneration = LL_DAC_WAVE_AUTO_GENERATION_NONE;
 
     LL_DAC_Init(DAC1, LL_DAC_CHANNEL_1, &dacInit);
-    LL_DAC_Init(DAC1, LL_DAC_CHANNEL_2, &dacInit);
     
     Timer3Init(DacUpdateHandler, 44100);
 
@@ -57,15 +51,13 @@ int32_t DacInit(){
     return 0;
 }
 
-uint32_t DacAudioPlay(int16_t* data, uint32_t size, void (*endHandler)(void)){
+uint32_t DacAudioPlay(int16_t* data, uint32_t size, void (*callbackHandler)(void)){
     audioDataNum = size;
     audioDataCnt = 0;
     audioData = data;
-    dacPlayEndHandler = endHandler;
+    dacCallbackHandler = callbackHandler;
     LL_DAC_Enable(DAC1, LL_DAC_CHANNEL_1);
-    LL_DAC_Enable(DAC1, LL_DAC_CHANNEL_2);
-    LL_DAC_ConvertData12RightAligned(DAC1, LL_DAC_CHANNEL_2, 2048);
-    Timer3Enable();
+    if(!LL_TIM_IsEnabledCounter(TIM3))Timer3Enable();
     return size;
 }
 

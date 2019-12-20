@@ -39,6 +39,7 @@ static I2C_TASK mpuDataUpdateTaskWrap[] = {
 
 void MpuDataUpdate(){
     I2cTransferWrap(mpuDataUpdateTaskWrap, 12);
+    /*
     mpuDataUpdateCnt += 1;
     if(mpuDataUpdateCnt == 100){
         mpuDataUpdateCnt = 0;
@@ -50,6 +51,7 @@ void MpuDataUpdate(){
             gyroData[2]
         );
     }
+    */
     return;
 }
 
