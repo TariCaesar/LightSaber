@@ -16,15 +16,13 @@ int main()
     AudioInit();
     PowerManageInit();
     
-    DeviceEnable();
+    //DeviceEnable();
 
     while(1) {
-        /*
         if(!AudioPlay(AUDIO_NAME_OPEN)){
             UsartSetMystdioHandler(USART2);
             MyPrintf("Start play\n");
         }
-        */
         
         /*
         uint8_t data;

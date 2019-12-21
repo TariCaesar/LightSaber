@@ -9,7 +9,7 @@
 #include "usart.h"
 #include "spi.h"
 
-#define LED_NUM 8
+#define LED_NUM 20
 
 typedef struct{
     uint8_t R;
@@ -23,6 +23,6 @@ int32_t LedInit();
 
 int32_t LedUpdate();
 
-int32_t LedReset();
+int32_t LedIsUpdating();
 
 #endif

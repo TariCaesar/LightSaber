@@ -3,12 +3,30 @@
 LED_COLOR ledColorData[LED_NUM];
 static uint8_t ledColorDataUnroll[LED_NUM * 24];
 
-static uint8_t ledHighData = 0xf8;
-static uint8_t ledLowData = 0xe0;
-static uint8_t ledResetData = 0x0;
+static uint8_t ledHighData = 0xfc;
+static uint8_t ledLowData = 0xc0;
+static uint8_t ledResetData = 0x00;
+
+static int32_t ledIsUpdating = 0;
+
+static void LedResetCallbackHandler(){
+    ledIsUpdating = 0;
+    return;
+}
+
+static int32_t LedReset(){
+    Spi2WriteDummyDma(&ledResetData, 128, LedResetCallbackHandler);
+    return 0;
+}
+
+static void LedUpdataCallbackHandler(){
+    //LedReset();
+    return;
+}
 
 int32_t LedUpdate(){
-    if(LL_SPI_IsActiveFlag_BSY(SPI2))return 1;
+    if(ledIsUpdating)return 1;
+    ledIsUpdating = 1;
     for(int32_t i = 0; i < LED_NUM; ++i){
         for(int32_t j = 0; j < 8; ++j){
             ledColorDataUnroll[i * 24 + j] =
@@ -22,19 +40,15 @@ int32_t LedUpdate(){
                 ledHighData: ledLowData;
         }
     }
-    Spi2DMATrigger(ledColorDataUnroll, LED_NUM * 24);
-    return 0;
-}
-
-int32_t LedReset(){
-    if(LL_SPI_IsActiveFlag_BSY(SPI2))return 1;
-    Spi2DMATriggerDummy(&ledResetData, 64);
+    Spi2WriteDma(ledColorDataUnroll, LED_NUM * 24, LedUpdataCallbackHandler);
     return 0;
 }
 
 int32_t LedInit(){
     Spi2Init();
     
+    ledIsUpdating = 0;
+
     UsartSetMystdioHandler(USART2);
     MyPrintf("LED init succeed!\n");
     return 0;

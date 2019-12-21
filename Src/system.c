@@ -5,7 +5,7 @@ static int32_t SysDelayCnt = 0;
 int32_t SysClkInit(){
     //Clock init
     LL_UTILS_PLLInitTypeDef pllInit;
-    pllInit.PLLMul = LL_RCC_PLL_MUL_6;
+    pllInit.PLLMul = LL_RCC_PLL_MUL_8;
     pllInit.Prediv = LL_RCC_PREDIV_DIV_1;
     LL_UTILS_ClkInitTypeDef clkInit;
     //Set AHB the same as pll clk, 48MHz

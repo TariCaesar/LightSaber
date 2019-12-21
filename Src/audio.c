@@ -1,26 +1,25 @@
 #include "audio.h"
 
-
 static int32_t audioStartSector[] = {1, 50, 65};
 //audio length in Sectors
 static int32_t audioLen[] = {49, 15, 13};
 static int16_t audioHeadBuffer[sizeof(audioStartSector) / sizeof(int32_t)][EXTERN_FLASH_SECTOR_SIZE / sizeof(int16_t)];
 //define ping pong buffer
 static int16_t audioBuffer[2][EXTERN_FLASH_SECTOR_SIZE / sizeof(int16_t)];
-static int16_t audioBufferPingOrPong = 0;
-static int16_t audioBufferReadCnt = 0;
-static int16_t audioBufferReadNum = 0;
-static int16_t audioBufferAddrReadNext = 0;
+static int32_t audioBufferPingOrPong = 0;
+static int32_t audioBufferReadCnt = 0;
+static int32_t audioBufferReadNum = 0;
+static int32_t audioBufferAddrReadNext = 0;
 
-// 1 means playing and 0 means not
-static int32_t audioPlayState = 0;
+static int32_t audioIsPlaying = 0;
 
 static void audioCallbackHandler(){
     if(audioBufferReadCnt < audioBufferReadNum){
-        DacAudioPlay((int16_t*)(audioBuffer[audioBufferPingOrPong]), EXTERN_FLASH_SECTOR_SIZE / 2, audioCallbackHandler);
+        DacAudioPlay((int16_t*)(audioBuffer[audioBufferPingOrPong]), EXTERN_FLASH_SECTOR_SIZE / sizeof(int16_t), audioCallbackHandler);
         audioBufferPingOrPong = (audioBufferPingOrPong)? 0: 1;
         audioBufferAddrReadNext += EXTERN_FLASH_SECTOR_SIZE;
-        FlashFastRead(audioBufferAddrReadNext, (uint8_t*)(audioBuffer[audioBufferPingOrPong]), EXTERN_FLASH_SECTOR_SIZE);
+
+        FlashFastRead(audioBufferAddrReadNext, (uint8_t*)(audioBuffer[audioBufferPingOrPong]), EXTERN_FLASH_SECTOR_SIZE, 0);
         audioBufferReadCnt += 1;
     }
     else if(audioBufferReadCnt == audioBufferReadNum){
@@ -28,8 +27,9 @@ static void audioCallbackHandler(){
         audioBufferReadCnt += 1;
     }
     else{
-        audioPlayState = 0;
+        audioIsPlaying = 0;
     } 
+    return;
 } 
 
 int32_t AudioInit(){
@@ -60,15 +60,15 @@ int32_t AudioInit(){
 }
 
 int32_t AudioPlay(AUDIO_NAME audioName){
-    if(audioPlayState)return 1;
+    if(audioIsPlaying)return 1;
     audioBufferReadCnt = 1;
     audioBufferReadNum = audioLen[audioName];
     audioBufferPingOrPong = 0;
     audioBufferAddrReadNext = (audioStartSector[audioName] + 1) * EXTERN_FLASH_SECTOR_SIZE;
-    FlashFastRead(audioBufferAddrReadNext, (uint8_t*)(audioBuffer[audioBufferPingOrPong]), EXTERN_FLASH_SECTOR_SIZE);
+    FlashFastRead(audioBufferAddrReadNext, (uint8_t*)(audioBuffer[audioBufferPingOrPong]), EXTERN_FLASH_SECTOR_SIZE, 0);
     audioBufferReadCnt += 1;
 
     DacAudioPlay((int16_t*)(audioHeadBuffer[audioName]), EXTERN_FLASH_SECTOR_SIZE / sizeof(int16_t), audioCallbackHandler);
-    audioPlayState = 1;
+    audioIsPlaying = 1;
     return 0;
 }

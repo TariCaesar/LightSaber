@@ -24,6 +24,6 @@
 
 int32_t ExternFlashInit();
 uint32_t FlashRead(uint32_t addr, uint8_t* addrDst, uint32_t size);
-int32_t FlashFastRead(uint32_t addr, uint8_t* addrDst, uint32_t size);
+int32_t FlashFastRead(uint32_t addr, uint8_t* addrDst, uint32_t size, void (*callbackHandler)(void));
 
 #endif

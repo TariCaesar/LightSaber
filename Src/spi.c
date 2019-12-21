@@ -3,6 +3,7 @@
 static uint8_t spi1DmaTxDummy = 0xff;
 static uint8_t spi1DmaRxDummy = 0xff;
 static void (*spi1DmaCallbackHandler)(void) = 0;
+static void (*spi2DmaCallbackHandler)(void) = 0;
 
 int32_t Spi1Init()
 {
@@ -225,7 +226,8 @@ uint32_t Spi1WriteReadDMA(uint8_t* addrSrc, uint8_t* addrDst, uint32_t size, voi
     return size;
 }
 
-int32_t Spi2DMATrigger(uint8_t* addrSrc, uint32_t size){
+int32_t Spi2WriteDma(uint8_t* addrSrc, uint32_t size, void (*callbackHandler)(void)){
+    spi2DmaCallbackHandler = callbackHandler;
     LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_5);
     LL_DMA_ConfigTransfer(
             DMA1, 
@@ -251,7 +253,8 @@ int32_t Spi2DMATrigger(uint8_t* addrSrc, uint32_t size){
     return 0;
 }
 
-int32_t Spi2DMATriggerDummy(uint8_t* addrSrc, uint32_t size){
+int32_t Spi2WriteDummyDma(uint8_t* addrSrc, uint32_t size, void (*callbackHandler)(void)){
+    spi2DmaCallbackHandler = callbackHandler;
     LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_5);
     LL_DMA_ConfigTransfer(
             DMA1, 
@@ -297,5 +300,6 @@ void DMA1_Channel5_IRQHandler(){
     LL_DMA_ClearFlag_TC5(DMA1);
     LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_5);
     LL_SPI_DisableDMAReq_TX(SPI2);
+    if(spi2DmaCallbackHandler)spi2DmaCallbackHandler();
     return;
 }

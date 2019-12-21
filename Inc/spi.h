@@ -35,8 +35,8 @@ uint8_t Spi1WriteReadByte(uint8_t dataWrite);
 //for useless data use NULL or 0 as input parameter
 uint32_t Spi1WriteReadDMA(uint8_t* addrSrc, uint8_t* addrDst, uint32_t size, void (*callbackHandler)(void));
 
-int32_t Spi2DMATrigger(uint8_t* addrSrc, uint32_t size);
+int32_t Spi2WriteDma(uint8_t* addrSrc, uint32_t size, void (*callbackHandler)(void));
 
 //use dma transfer with noincrement data src
-int32_t Spi2DMATriggerDummy(uint8_t* addrSrc, uint32_t size);
+int32_t Spi2WriteDummyDma(uint8_t* addrSrc, uint32_t size, void (*callbackHandler)(void));
 #endif

@@ -1,11 +1,20 @@
 #include "extern_flash.h"
 
+
+static void (*flashFastReadCallbackHandler)(void) = 0;
+
 static struct{
     uint32_t addr;
     uint8_t* addrDst;
     uint32_t size;
     uint32_t cnt;
 }flashFastReadTask;
+
+static void FlashFastReadCallbackHandler(){
+    Spi1SSDisable();
+    if(flashFastReadCallbackHandler)flashFastReadCallbackHandler();
+    return;
+}
 
 static int32_t FlashIsBusy()
 {
@@ -201,7 +210,8 @@ uint32_t FlashRead(uint32_t addr, uint8_t* addrDst, uint32_t size)
     return size;
 }
 
-int32_t FlashFastRead(uint32_t addr, uint8_t* addrDst, uint32_t size){
+int32_t FlashFastRead(uint32_t addr, uint8_t* addrDst, uint32_t size, void (*callbackHandler)(void)){
+    flashFastReadCallbackHandler = callbackHandler;
     Spi1SSEnable();
     Spi1WriteReadByte(FLASH_CMD_FASTREAD);
     Spi1WriteReadByte((uint8_t)(addr >> 16));
@@ -209,7 +219,7 @@ int32_t FlashFastRead(uint32_t addr, uint8_t* addrDst, uint32_t size){
     Spi1WriteReadByte((uint8_t)addr);
     //dummy frame
     Spi1WriteReadByte(0xff);
-    Spi1WriteReadDMA(0, addrDst, size, 0);
+    Spi1WriteReadDMA(0, addrDst, size, FlashFastReadCallbackHandler);
     return 0;
 }
 
@@ -217,12 +227,12 @@ int32_t ExternFlashInit()
 {
     Spi1Init();
 
-    if(FlashSelfCheck()) {
+    if(FlashSelfCheck()){
         UsartSetMystdioHandler(USART2);
         MyPrintf("External flash self check fail!\n");
         return 1;
     }
-    else {
+    else{
         UsartSetMystdioHandler(USART2);
         MyPrintf("External flash self check pass!\n");
         return 0;
