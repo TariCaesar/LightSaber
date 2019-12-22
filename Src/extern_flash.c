@@ -1,14 +1,6 @@
 #include "extern_flash.h"
 
-
 static void (*flashFastReadCallbackHandler)(void) = 0;
-
-static struct{
-    uint32_t addr;
-    uint8_t* addrDst;
-    uint32_t size;
-    uint32_t cnt;
-}flashFastReadTask;
 
 static void FlashFastReadCallbackHandler(){
     Spi1SSDisable();

@@ -1,7 +1,7 @@
 #include "mpu6050.h"
 
-int16_t gyroData[3] = {0};
-static uint32_t mpuDataUpdateCnt = 0;
+volatile int16_t gyroData[3] = {0};
+volatile int32_t deviceIsSwing = 0;
 
 static inline uint16_t MpuWriteReg(uint8_t regAddr, uint8_t data)
 {
@@ -38,20 +38,16 @@ static I2C_TASK mpuDataUpdateTaskWrap[] = {
 };
 
 void MpuDataUpdate(){
-    I2cTransferWrap(mpuDataUpdateTaskWrap, 12);
-    /*
-    mpuDataUpdateCnt += 1;
-    if(mpuDataUpdateCnt == 100){
-        mpuDataUpdateCnt = 0;
-        UsartSetMystdioHandler(USART2);
-        MyPrintf(
-            "Mpu gyro data: x:%d y:%d z:%d\n", 
-            gyroData[0], 
-            gyroData[1], 
-            gyroData[2]
-        );
+    int16_t maxGyroData = 0;
+    int16_t absGyroData;
+    for(int32_t i = 0; i < 3; ++i){
+        absGyroData = (gyroData[i] < 0)? -gyroData[i]: gyroData[i];
+        if(absGyroData > maxGyroData)maxGyroData = absGyroData;
     }
-    */
+    if(absGyroData > SWING_THRESHOLD)deviceIsSwing = 1;
+    else deviceIsSwing = 0;
+    I2cTransferWrap(mpuDataUpdateTaskWrap, 12);
+
     return;
 }
 
@@ -82,6 +78,7 @@ int32_t MpuInit()
     if(MpuReadReg(MPU_WHO_AM_I) == MPU_WHO_AM_I_BULIDIN_DATA){
         UsartSetMystdioHandler(USART2);
         MyPrintf("Mpu6050 initialization succeed!\n");
+        deviceIsSwing = 0;
         EnableMpuDataUpdate();
         return 0;
     }

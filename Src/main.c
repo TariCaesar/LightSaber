@@ -16,12 +16,24 @@ int main()
     AudioInit();
     PowerManageInit();
     
-    //DeviceEnable();
+    DeviceEnable();
 
+    if(!AudioPlay(AUDIO_NAME_OPEN)){
+        UsartSetMystdioHandler(USART2);
+        MyPrintf("Play open audio\n");
+    }
     while(1) {
-        if(!AudioPlay(AUDIO_NAME_OPEN)){
-            UsartSetMystdioHandler(USART2);
-            MyPrintf("Start play\n");
+        if(deviceIsSwing){
+            if(!AudioPlay(AUDIO_NAME_SWING)){
+                UsartSetMystdioHandler(USART2);
+                MyPrintf("Play swing audio\n");
+            }
+        }
+        else{
+            if(!AudioPlay(AUDIO_NAME_HUM)){
+                UsartSetMystdioHandler(USART2);
+                MyPrintf("Play hum audio\n");
+            }
         }
         
         /*

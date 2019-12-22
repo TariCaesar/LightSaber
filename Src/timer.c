@@ -1,7 +1,41 @@
 #include "timer.h"
 
+static void (*timer1IntHandler)(void) = 0;
 static void (*timer2IntHandler)(void) = 0;
 static void (*timer3IntHandler)(void) = 0;
+
+int32_t Timer1Init(void (*intHandler)(void)){
+    timer1IntHandler = intHandler;
+    LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_TIM1);
+    LL_TIM_DeInit(TIM1);
+    LL_TIM_SetClockSource(TIM1, LL_TIM_CLOCKSOURCE_INTERNAL);
+    LL_TIM_InitTypeDef timer1Init;
+    LL_TIM_StructInit(&timer1Init);
+    timer1Init.Prescaler = 0u;
+    timer1Init.CounterMode = LL_TIM_COUNTERMODE_UP;
+
+    //set timer trigger frequency to 100Hz
+    LL_RCC_ClocksTypeDef SysClk;
+    LL_RCC_GetSystemClocksFreq(&SysClk);
+    uint32_t timerClk = (LL_RCC_GetAPB2Prescaler() == LL_RCC_APB1_DIV_1)? SysClk.PCLK2_Frequency: SysClk.PCLK2_Frequency * 2;
+    timer1Init.Autoreload = timerClk / 1;
+    
+    LL_TIM_Init(TIM1, &timer1Init);
+
+    LL_TIM_OC_InitTypeDef timer1OcInit;
+    LL_TIM_OC_StructInit(&timer1OcInit);
+    timer1OcInit.CompareValue = 0u;
+    timer1OcInit.OCMode = LL_TIM_OCMODE_PWM1;
+    timer1OcInit.OCNIdleState = LL_TIM_OCIDLESTATE_LOW;
+    timer1OcInit.OCNPolarity = LL_TIM_OCPOLARITY_HIGH;
+    timer1OcInit.OCNState = LL_TIM_OCSTATE_ENABLE;
+    timer1OcInit.OCState = LL_TIM_OCSTATE_ENABLE;
+    LL_TIM_OC_Init(TIM1, LL_TIM_CHANNEL_CH3, &timer1OcInit);
+    
+    
+
+    return 0;
+}
 
 int32_t Timer2Init(void (*intHandler)(void), uint32_t frequency){
     LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM2);

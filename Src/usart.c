@@ -12,10 +12,10 @@ typedef struct {
     uint32_t tail;
 } UsartTxBuffer;
 
-static UsartRxBuffer usart1RxBuffer;
-static UsartTxBuffer usart1TxBuffer;
-static UsartRxBuffer usart2RxBuffer;
-static UsartTxBuffer usart2TxBuffer;
+static volatile UsartRxBuffer usart1RxBuffer;
+static volatile UsartTxBuffer usart1TxBuffer;
+static volatile UsartRxBuffer usart2RxBuffer;
+static volatile UsartTxBuffer usart2TxBuffer;
 
 int32_t UsartInit()
 {

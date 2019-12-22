@@ -15,6 +15,7 @@ int32_t PowerManageInit(){
     LL_GPIO_Init(GPIOC, &powerManageGpioInit);
     powerManageGpioInit.Pin = LL_GPIO_PIN_8;
     powerManageGpioInit.Mode = LL_GPIO_MODE_INPUT;
+    powerManageGpioInit.Pull = LL_GPIO_PULL_DOWN;
     LL_GPIO_Init(GPIOC, &powerManageGpioInit);
 
     LL_GPIO_SetOutputPin(GPIOC, LL_GPIO_PIN_7);
@@ -30,11 +31,11 @@ int32_t DeviceEnable(){
     UsartSetMystdioHandler(USART2);
     MyPrintf("Enable 5V device.\n");
     return 0; 
-};
+}
 
 int32_t DeviceDisable(){
     LL_GPIO_SetOutputPin(GPIOC, LL_GPIO_PIN_7);
     UsartSetMystdioHandler(USART2);
     MyPrintf("Disable 5V device.\n");
     return 0;
-};
+}

@@ -20,7 +20,7 @@ static int32_t LedReset(){
 }
 
 static void LedUpdataCallbackHandler(){
-    //LedReset();
+    LedReset();
     return;
 }
 

@@ -7,6 +7,20 @@
 #include "stm32f1xx_ll_tim.h"
 #include "stm32f1xx_ll_dma.h"
 
+//Init tim1 for led data output 
+int32_t Timer1Init(void (*intHandler)(void));
+
+static inline int32_t Timer1Enable(){
+    LL_TIM_SetCounter(TIM1, 0);
+    LL_TIM_EnableCounter(TIM1);
+    return 0;
+}
+
+static inline int32_t Timer1Disable(){
+    LL_TIM_DisableCounter(TIM1);
+    return 0;
+}
+
 //Init tim2 for mpu cyclic read
 int32_t Timer2Init(void (*intHandler)(void), uint32_t frequency);
 

@@ -47,8 +47,11 @@
 #define MPU_INT_OVERFLOW_MSK (0x1 << 4)
 #define MPU_FIFO_RESET_MSK (0x1 << 2)
 
+#define SWING_THRESHOLD (INT16_MAX / 4)
+
 //gyro store in x, y, z
-extern int16_t gyroData[3];
+extern volatile int16_t gyroData[3];
+extern volatile int32_t deviceIsSwing;
 
 int32_t MpuInit();
 int32_t EnableMpuDataUpdate();

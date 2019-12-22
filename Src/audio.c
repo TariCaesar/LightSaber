@@ -3,9 +3,9 @@
 static int32_t audioStartSector[] = {1, 50, 65};
 //audio length in Sectors
 static int32_t audioLen[] = {49, 15, 13};
-static int16_t audioHeadBuffer[sizeof(audioStartSector) / sizeof(int32_t)][EXTERN_FLASH_SECTOR_SIZE / sizeof(int16_t)];
+static volatile int16_t audioHeadBuffer[sizeof(audioStartSector) / sizeof(int32_t)][EXTERN_FLASH_SECTOR_SIZE / sizeof(int16_t)];
 //define ping pong buffer
-static int16_t audioBuffer[2][EXTERN_FLASH_SECTOR_SIZE / sizeof(int16_t)];
+static volatile int16_t audioBuffer[2][EXTERN_FLASH_SECTOR_SIZE / sizeof(int16_t)];
 static int32_t audioBufferPingOrPong = 0;
 static int32_t audioBufferReadCnt = 0;
 static int32_t audioBufferReadNum = 0;
