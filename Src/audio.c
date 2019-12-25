@@ -11,6 +11,7 @@ static int32_t audioBufferReadCnt = 0;
 static int32_t audioBufferReadNum = 0;
 static int32_t audioBufferAddrReadNext = 0;
 
+static void (*audioPlayCallbackHandler)(void) = 0;
 static int32_t audioIsPlaying = 0;
 
 static void audioCallbackHandler(){
@@ -28,6 +29,7 @@ static void audioCallbackHandler(){
     }
     else{
         audioIsPlaying = 0;
+        if(audioPlayCallbackHandler != 0)audioPlayCallbackHandler();
     } 
     return;
 } 
@@ -44,6 +46,7 @@ int32_t AudioInit(){
         return 1;
     }
 
+    audioPlayCallbackHandler = 0;
     UsartSetMystdioHandler(USART2);
     MyPrintf("Audio initializaion succeed!\n");
     MyPrintf("Start preload audio data.\n");
@@ -59,8 +62,9 @@ int32_t AudioInit(){
     return 0;
 }
 
-int32_t AudioPlay(AUDIO_NAME audioName){
+int32_t AudioPlay(AUDIO_NAME audioName, void (*callbackHandler)(void)){
     if(audioIsPlaying)return 1;
+    audioPlayCallbackHandler = callbackHandler;
     audioBufferReadCnt = 1;
     audioBufferReadNum = audioLen[audioName];
     audioBufferPingOrPong = 0;

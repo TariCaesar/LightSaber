@@ -16,6 +16,6 @@ typedef enum{
 
 int32_t AudioInit();
 
-int32_t AudioPlay(AUDIO_NAME audioName);
+int32_t AudioPlay(AUDIO_NAME audioName, void (*callbackHandler)(void));
 
 #endif

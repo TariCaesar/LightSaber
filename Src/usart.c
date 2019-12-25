@@ -100,6 +100,22 @@ int32_t UsartInit()
     return 0;
 }
 
+int32_t UsartTxBufferIsEmpty(USART_TypeDef* usartTarget){
+    UsartTxBuffer* txBuffer;
+
+    if(usartTarget == USART1){
+        txBuffer = &usart1TxBuffer;
+    }
+    else if(usartTarget == USART2){
+        txBuffer = &usart2TxBuffer;
+    }
+    else
+        return 0;
+
+    if(txBuffer->head == txBuffer->tail)return 1;
+    else return 0;
+}
+
 static uint32_t UsartReceiveData(uint8_t* addrDst, uint32_t size, USART_TypeDef* usartTarget)
 {
     uint32_t i, rxReceiveRemain;

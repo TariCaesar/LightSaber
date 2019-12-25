@@ -55,5 +55,6 @@ extern volatile int32_t deviceIsSwing;
 
 int32_t MpuInit();
 int32_t EnableMpuDataUpdate();
+int32_t MpuEnterSleepMode();
 
 #endif

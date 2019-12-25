@@ -1,12 +1,23 @@
 #include "timer.h"
 
-static void (*timer1IntHandler)(void) = 0;
+static void (*timer1DmaCallbackHandler)(void) = 0;
 static void (*timer2IntHandler)(void) = 0;
 static void (*timer3IntHandler)(void) = 0;
 
-int32_t Timer1Init(void (*intHandler)(void)){
-    timer1IntHandler = intHandler;
+static inline int32_t Timer1Enable(){
+    LL_TIM_SetCounter(TIM1, 0);
+    LL_TIM_EnableCounter(TIM1);
+    return 0;
+}
+
+static inline int32_t Timer1Disable(){
+    LL_TIM_DisableCounter(TIM1);
+    return 0;
+}
+
+int32_t Timer1Init(){
     LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_TIM1);
+
     LL_TIM_DeInit(TIM1);
     LL_TIM_SetClockSource(TIM1, LL_TIM_CLOCKSOURCE_INTERNAL);
     LL_TIM_InitTypeDef timer1Init;
@@ -17,8 +28,8 @@ int32_t Timer1Init(void (*intHandler)(void)){
     //set timer trigger frequency to 100Hz
     LL_RCC_ClocksTypeDef SysClk;
     LL_RCC_GetSystemClocksFreq(&SysClk);
-    uint32_t timerClk = (LL_RCC_GetAPB2Prescaler() == LL_RCC_APB1_DIV_1)? SysClk.PCLK2_Frequency: SysClk.PCLK2_Frequency * 2;
-    timer1Init.Autoreload = timerClk / 1;
+    uint32_t timerClk = (LL_RCC_GetAPB2Prescaler() == LL_RCC_APB2_DIV_1)? SysClk.PCLK2_Frequency: SysClk.PCLK2_Frequency * 2;
+    timer1Init.Autoreload = timerClk / 800000;
     
     LL_TIM_Init(TIM1, &timer1Init);
 
@@ -29,12 +40,60 @@ int32_t Timer1Init(void (*intHandler)(void)){
     timer1OcInit.OCNIdleState = LL_TIM_OCIDLESTATE_LOW;
     timer1OcInit.OCNPolarity = LL_TIM_OCPOLARITY_HIGH;
     timer1OcInit.OCNState = LL_TIM_OCSTATE_ENABLE;
-    timer1OcInit.OCState = LL_TIM_OCSTATE_ENABLE;
+    timer1OcInit.OCState = LL_TIM_OCSTATE_DISABLE;
     LL_TIM_OC_Init(TIM1, LL_TIM_CHANNEL_CH3, &timer1OcInit);
+    LL_TIM_OC_EnablePreload(TIM1, LL_TIM_CHANNEL_CH3);
+    LL_TIM_OC_SetDeadTime(TIM1, 0);
     
-    
+    if(!LL_AHB1_GRP1_IsEnabledClock(LL_AHB1_GRP1_PERIPH_DMA1)) {
+        LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA1);
+    }
 
+    LL_DMA_ClearFlag_TC6(DMA1);
+    LL_DMA_EnableIT_TC(DMA1, LL_DMA_CHANNEL_6);
+    NVIC_SetPriority(DMA1_Channel6_IRQn, NVIC_EncodePriority(2, 2, 0));
+    NVIC_EnableIRQ(DMA1_Channel6_IRQn);
+
+    LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_6);
+    LL_DMA_ConfigTransfer(
+            DMA1, 
+            LL_DMA_CHANNEL_6,
+            LL_DMA_DIRECTION_MEMORY_TO_PERIPH |
+            LL_DMA_PRIORITY_VERYHIGH |
+            LL_DMA_MODE_NORMAL |
+            LL_DMA_PERIPH_NOINCREMENT |
+            LL_DMA_MEMORY_INCREMENT |
+            LL_DMA_PDATAALIGN_HALFWORD |
+            LL_DMA_MDATAALIGN_HALFWORD
+    );
     return 0;
+}
+
+int32_t Timer1Trigger(uint16_t* dataSrc, uint32_t size, void (*dmaCallbackHandler)(void)){
+    timer1DmaCallbackHandler = dmaCallbackHandler;
+    LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_6);
+    LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_6, size - 1);
+    LL_DMA_ConfigAddresses(
+        DMA1,
+        LL_DMA_CHANNEL_6,
+        (uint32_t)dataSrc,
+        (uint32_t)(&(TIM1->CCR3)),
+        LL_DMA_GetDataTransferDirection(DMA1, LL_DMA_CHANNEL_6)
+    );
+    LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_6);
+    LL_TIM_EnableDMAReq_CC3(TIM1);
+    LL_TIM_OC_SetCompareCH3(TIM1, dataSrc[0]);
+    Timer1Enable();
+    return 0;
+}
+
+void DMA1_Channel6_IRQHandler(){
+    LL_DMA_ClearFlag_TC6(DMA1);
+    LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_6);
+    LL_TIM_DisableDMAReq_CC3(TIM1);
+    Timer1Disable();
+    if(timer1DmaCallbackHandler != 0)timer1DmaCallbackHandler();
+    return;
 }
 
 int32_t Timer2Init(void (*intHandler)(void), uint32_t frequency){

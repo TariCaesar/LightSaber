@@ -13,4 +13,5 @@
 
 int32_t UsartInit();
 int32_t UsartSetMystdioHandler(USART_TypeDef* usartTarget);
+int32_t UsartTxBufferIsEmpty(USART_TypeDef* usartTarget);
 #endif

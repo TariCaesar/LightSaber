@@ -7,9 +7,10 @@
 #include "stm32f1xx_ll_spi.h"
 #include "mystdio.h"
 #include "usart.h"
-#include "spi.h"
+#include "timer.h"
 
 #define LED_NUM 20
+#define LED_RESET_DATA_LENGTH 64
 
 typedef struct{
     uint8_t R;

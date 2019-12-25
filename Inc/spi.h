@@ -9,34 +9,27 @@
 #include "mystdio.h"
 #include "usart.h"
 
-__STATIC_INLINE void Spi1SSEnable()
+static inline void SpiSSEnable()
 {
     LL_GPIO_ResetOutputPin(GPIOA, LL_GPIO_PIN_15);
 }
 
-__STATIC_INLINE void Spi1SSDisable()
+static inline void SpiSSDisable()
 {
     LL_GPIO_SetOutputPin(GPIOA, LL_GPIO_PIN_15);
 }
 
-__STATIC_INLINE int32_t Spi1SSIsEnabled()
+static inline int32_t SpiSSIsEnabled()
 {
     return !(LL_GPIO_ReadInputPort(GPIOA) & (0x1 << 15));
 }
 
-int32_t Spi1Init();
-
-int32_t Spi2Init();
+int32_t SpiInit();
 
 //must enable spi ss before this
 //disable spi mannually if you want to end this frame transfer
-uint8_t Spi1WriteReadByte(uint8_t dataWrite);
+uint8_t SpiWriteReadByte(uint8_t dataWrite);
 
 //for useless data use NULL or 0 as input parameter
-uint32_t Spi1WriteReadDMA(uint8_t* addrSrc, uint8_t* addrDst, uint32_t size, void (*callbackHandler)(void));
-
-int32_t Spi2WriteDma(uint8_t* addrSrc, uint32_t size, void (*callbackHandler)(void));
-
-//use dma transfer with noincrement data src
-int32_t Spi2WriteDummyDma(uint8_t* addrSrc, uint32_t size, void (*callbackHandler)(void));
+uint32_t SpiWriteReadDMA(uint8_t* addrSrc, uint8_t* addrDst, uint32_t size, void (*callbackHandler)(void));
 #endif

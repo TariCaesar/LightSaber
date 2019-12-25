@@ -24,8 +24,9 @@ void DacUpdateHandler(){
 }
 
 int32_t DacInit(){
-    if(!LL_APB2_GRP1_IsEnabledClock(LL_APB2_GRP1_PERIPH_GPIOA))
+    if(!LL_APB2_GRP1_IsEnabledClock(LL_APB2_GRP1_PERIPH_GPIOA)){
         LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOA);
+    }
     LL_GPIO_InitTypeDef dacGpioInit;
     LL_GPIO_StructInit(&dacGpioInit);
     dacGpioInit.Mode = LL_GPIO_MODE_ANALOG;

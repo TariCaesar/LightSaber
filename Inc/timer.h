@@ -8,16 +8,17 @@
 #include "stm32f1xx_ll_dma.h"
 
 //Init tim1 for led data output 
-int32_t Timer1Init(void (*intHandler)(void));
+int32_t Timer1Init();
 
-static inline int32_t Timer1Enable(){
-    LL_TIM_SetCounter(TIM1, 0);
-    LL_TIM_EnableCounter(TIM1);
+int32_t Timer1Trigger(uint16_t* dataSrc, uint32_t size, void (*dmaCallbackHandler)(void));
+
+static inline int32_t Timer1EnableOutput(){
+    LL_TIM_EnableAllOutputs(TIM1);
     return 0;
 }
 
-static inline int32_t Timer1Disable(){
-    LL_TIM_DisableCounter(TIM1);
+static inline int32_t Timer1DisableOutput(){
+    LL_TIM_DisableAllOutputs(TIM1);
     return 0;
 }
 

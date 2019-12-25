@@ -11,31 +11,48 @@ int main()
 
     //Init peripheral
     UsartInit();
+    PowerManageInit();
     MpuInit();
     LedInit();
     AudioInit();
-    PowerManageInit();
     
-    DeviceEnable();
+    PowerBootManage();
 
-    if(!AudioPlay(AUDIO_NAME_OPEN)){
+    for(int32_t i = 0; i < LED_NUM; ++i){
+        ledColorData[i].R = 0x00;
+        ledColorData[i].G = 0x00;
+        ledColorData[i].B = 0xff;
+    }
+
+    if(!AudioPlay(AUDIO_NAME_OPEN, 0)){
         UsartSetMystdioHandler(USART2);
         MyPrintf("Play open audio\n");
     }
     while(1) {
-        if(deviceIsSwing){
-            if(!AudioPlay(AUDIO_NAME_SWING)){
+        if(shutdownAudioPlayed){
+            EnterStopMode();
+        }
+        else if(systemNeedShutdown){
+            if(!AudioPlay(AUDIO_NAME_OPEN, ShutdownAudioCallbackHandler)){
                 UsartSetMystdioHandler(USART2);
-                MyPrintf("Play swing audio\n");
+                MyPrintf("Play shutdown audio.\n");
             }
         }
         else{
-            if(!AudioPlay(AUDIO_NAME_HUM)){
-                UsartSetMystdioHandler(USART2);
-                MyPrintf("Play hum audio\n");
+            if(deviceIsSwing){
+                if(!AudioPlay(AUDIO_NAME_SWING, 0)){
+                    UsartSetMystdioHandler(USART2);
+                    MyPrintf("Play swing audio\n");
+                }
+            }
+            else{
+                if(!AudioPlay(AUDIO_NAME_HUM, 0)){
+                    UsartSetMystdioHandler(USART2);
+                    MyPrintf("Play hum audio\n");
+                }
             }
         }
-        
+       
         /*
         uint8_t data;
         UsartSetMystdioHandler(USART2);

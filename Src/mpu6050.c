@@ -96,3 +96,8 @@ int32_t EnableMpuDataUpdate(){
     MyPrintf("Start mpu data update.\n");
     return 0;
 }
+
+int32_t MpuEnterSleepMode(){
+    MpuWriteReg(MPU_PWRREG1, 0x40);
+    return 0;
+}
